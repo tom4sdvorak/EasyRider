@@ -28,6 +28,8 @@ export default function RootLayout() {
         options={{ headerShown: false }}
       />
       <Stack.Screen options={{headerTransparent: true, headerTitle: "Login"}} name="login" />
+      <Stack.Screen options={{headerTransparent: true, headerTitle: "Register"}} name="register" />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
     </Stack>
   );
 }

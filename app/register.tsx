@@ -3,27 +3,32 @@ import { useState } from "react";
 import { Text, View, StyleSheet, Image, Pressable, TextInput} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Login() {
+export default function Register() {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const router = useRouter();
   
-  const tryLogin = ()=>{
-    console.log("Pressed login");
-    router.replace("./(tabs)");
+  const tryRegister = ()=>{
+    console.log("Pressed register");
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.secondaryCont}>
+      <View style={[styles.secondaryCont, {flex: 1}]}>
         <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")}/>
       </View>
-      <View style={styles.secondaryCont}>
-        <Text style={[styles.title, styles.textDark]}>Login</Text>
+      <View style={[styles.secondaryCont, {flex: 2}]}>
+        <Text style={[styles.title, styles.textDark]}>Create Account</Text>
+        <View style={{width: "100%"}}>
           <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
+          <TextInput style={styles.input} onChangeText={setName} value={name} placeholder="Name" autoFocus={true} />
           <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
-        <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryLogin}>
-          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>
+          <TextInput style={styles.input} onChangeText={setPasswordConfirm} value={passwordConfirm} placeholder="Confirm Password" secureTextEntry={true} />
+        </View>
+        <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryRegister}>
+          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Register</Text>
         </Pressable>
       </View>   
     </SafeAreaView>
@@ -37,7 +42,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   secondaryCont: {
-    flex: 1, 
     justifyContent: "space-evenly", 
     alignItems: "center",
   },
@@ -91,7 +95,7 @@ const styles = StyleSheet.create({
     boxSizing: "border-box",
     fontSize: 16,
     lineHeight: 24,
-    margin: 8,
+    marginTop: 8,
   }
 });
 
