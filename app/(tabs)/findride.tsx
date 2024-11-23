@@ -1,12 +1,31 @@
 import { Redirect, useRouter } from "expo-router";
 import { Text, View, StyleSheet, Image, Pressable} from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 export default function FindRide() {
 
 
   return (
     <View style={styles.container}>
-          <Text style={[styles.title, styles.textDark]}>Welcome to EasyRider!</Text>
+      <MapView
+        initialRegion={{
+          latitude: -30.559483,
+          longitude: 22.937506,
+          latitudeDelta: 0.09,
+          longitudeDelta: 0.04,
+        }}
+        zoomControlEnabled={true}
+        mapType={'standard'}
+        style={styles.container}>
+        <Marker
+          coordinate={{
+          latitude: -30.559483,
+          longitude: 22.937506,
+          }}
+        >
+
+        </Marker>
+      </MapView>
     </View>
   );
 }
