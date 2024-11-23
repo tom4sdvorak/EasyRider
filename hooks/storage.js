@@ -1,6 +1,8 @@
 import { MMKV } from 'react-native-mmkv'
+import { useId } from 'react';
 
 export const storage = new MMKV();
+
 
 // Retrieve array of all saved rides
 export const getAllRides = () => {
@@ -17,6 +19,16 @@ export const getAllRides = () => {
 }
 
 //Save new ride
-export const saveRide = (rideFrom, rideTo, seats, price, date, time) => {
-    
+export const saveRide = (rideFrom, rideTo, seats, price, date) => {
+    const newRide = {
+        from: rideFrom,
+        to: rideTo,
+        seatsTotal: seats,
+        seatsTaken: 0,
+        price: price,
+        date: date,
+        participants: []
+    }
+    const uniqueId = Date.now();
+    storage.set(uniqueId, JSON.stringify(newRide));
 }

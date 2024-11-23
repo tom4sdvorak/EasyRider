@@ -4,6 +4,7 @@ import MapView, { Marker } from "react-native-maps";
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from "react";
 import { getCities, getLatLng } from "../../hooks/location";
+import { saveRide } from "../../hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 
@@ -16,14 +17,19 @@ export default function AddRide() {
   });
 
   const [cities, setCities] = useState<string[]>([]);
-  const [from, setFrom] = useState("");
+  const [error, setError] = useState('');
   const [fromExpanded, setFromExpanded] = useState(false);
-  const [to, setTo] = useState("");
   const [toExpanded, setToExpanded] = useState(false);
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  //Form data
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [seats, setSeats] = useState(1);
+  const [price, setPrice] = useState(1);
   
 
   useEffect(()=>{
@@ -32,7 +38,17 @@ export default function AddRide() {
 
   const trySubmit = ()=>{
     console.log("Pressed submit");
-
+    try {
+      saveRide(from, to, seats, price, new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0));
+    }
+    catch (e) {
+      if (e instanceof Error){
+        setError(e.message);
+      } 
+    }
+    finally {
+      setError("");
+    }    
   }
 
   const getCoord = (type: String) => {
@@ -61,17 +77,40 @@ export default function AddRide() {
     setShowTimePicker(false);
   }
 
+  const handleSeatsInput = (newData: string) => {
+    const numericData = parseInt(newData, 10);
+    if (isNaN(numericData) || numericData < 1 || numericData > 99) {
+      setError('Number of seats should be between 1 and 99.');
+    } else {
+      setSeats(numericData);
+    }
+  }
+
+  const handlePriceInput = (newData: string) => {
+    const numericData = parseInt(newData, 10);
+    if (isNaN(numericData) || numericData < 0 || numericData > 1000) {
+      setError('Price should be between 0 and 1000€.');
+    } else {
+      setPrice(numericData);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" backgroundColor="#2B2D42" />
+      
+      {/* Map portion */}
       <View style={styles.topCont}>
         <MapView style={{flex: 1}} initialRegion={region}>
           {to==="" ? <></> : <Marker pinColor="#D90429" coordinate={getCoord("to")}></Marker>}
           {from==="" ? <></> : <Marker pinColor="#2B2D42" coordinate={getCoord("from")}></Marker>}
         </MapView>
       </View>
+
+      {/* Form portion */}
       <View style={styles.botCont}>
-        <View style={{}}>
+        <View>      
+          {/* List of Cities to choose destination */}
           <Text style={[styles.label, styles.textDark]}>Where are you going?</Text>
           <ScrollView>
             <ListItem.Accordion containerStyle={styles.list}
@@ -96,7 +135,10 @@ export default function AddRide() {
             </ListItem.Accordion>
           </ScrollView>
         </View>
+        
         <View style={{width: "100%"}}>
+          
+          {/* List of cities to choose starting location */}
           <Text style={[styles.label, styles.textDark]}>From?</Text>
           <ScrollView>
             <ListItem.Accordion containerStyle={styles.list}
@@ -121,12 +163,13 @@ export default function AddRide() {
             </ListItem.Accordion>
           </ScrollView>
         </View>
-
+        
         <View style={{flexDirection: "row", justifyContent: "space-between"}}>
           <View style={{flex: 1, marginRight: 16}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Seats</Text>
-            <TextInput inputMode="numeric" keyboardType='numeric' style={styles.input}></TextInput>
+            <TextInput inputMode="numeric" keyboardType='numeric' value={seats.toString()} onChangeText={handleSeatsInput} style={styles.input}></TextInput>
           </View>
+          {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Date</Text>
             <Pressable onPressIn={()=>setShowDatePicker(true)}><TextInput readOnly={true} style={styles.input} value={date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()}></TextInput></Pressable>
@@ -140,8 +183,9 @@ export default function AddRide() {
         <View style={{flexDirection: "row", justifyContent: "space-between"}}>
           <View style={{flex: 1, marginRight: 16}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Price (€)</Text>
-            <TextInput inputMode="numeric" keyboardType='numeric' style={styles.input}></TextInput>
+            <TextInput inputMode="numeric" keyboardType='numeric' value={price.toString()} onChangeText={handlePriceInput} style={styles.input}></TextInput>
           </View>
+          {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Date</Text>
             <Pressable onPressIn={()=>setShowTimePicker(true)}><TextInput readOnly={true} style={styles.input} value={time.getHours()+':'+(time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes())}></TextInput></Pressable>
@@ -152,7 +196,7 @@ export default function AddRide() {
             /> }
           </View>
         </View>
-
+        {error && <Text style={[styles.label,{color: "#D90429"}]}>{error}</Text>}
         <Pressable style={[styles.button, styles.buttonPrimary]} onPress={trySubmit}>
           <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Submit ride</Text>
         </Pressable>
