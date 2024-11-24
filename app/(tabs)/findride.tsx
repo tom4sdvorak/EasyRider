@@ -7,9 +7,10 @@ import { Text, View, StyleSheet, Image, Pressable, ScrollView} from "react-nativ
 import MapView, { Marker } from "react-native-maps";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { SafeAreaView } from "react-native-safe-area-context";
+import AntDesign from '@expo/vector-icons/AntDesign';
 
-
-interface Ride {
+interface RideData {
   from: string,
   to: string,
   seatsTotal: number,
@@ -19,57 +20,78 @@ interface Ride {
   participants: []
 }
 
-export default function FindRide() {
+interface Ride {
+  id: string;
+  rideData: RideData,
+}
+
+function FindRide() {
   const [fromExpanded, setFromExpanded] = useState(false);
   const [toExpanded, setToExpanded] = useState(false);
   const [cities, setCities] = useState<string[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [rides, setRides] = useState<Ride[]>([]);
+  const [isLoaded, setLoaded] = useState(false);
 
 
   useEffect(()=>{
     setCities(getCities());
-    setRides(getAllRides());
-  }, []);
-
+    fetchRides().catch(console.error);
+    console.log("running useeffect");
+  }, [from, to]);
+  
+  const fetchRides = async () => {
+    try {
+      const data : Ride[] = await getAllRides(from, to);
+      setRides(data);
+    } catch(e){
+      console.log(e);
+    } finally {
+      setLoaded(true);
+    }  
+  };
+  
   const getTimeLeft = function(date: Date){
-    const timeLeft = (date.valueOf()-Date.now())/1000;
-    
+    date = new Date(date);
+    const timeLeft = (date.getTime()-Date.now())/1000;
     if(timeLeft<60){
-      return Math.round(timeLeft)+"s left";
+      return Math.round(timeLeft)+" seconds";
     }
     else if(timeLeft<3600){
-      return Math.round(timeLeft/60)+"min left";
+      return Math.round(timeLeft/60)+" minutes";
     }
     else if(timeLeft<86400){
-      return Math.round(timeLeft/60/60)+"hr left";
+      return Math.round(timeLeft/60/60)+" hours";
     }
     else{
-      return Math.round(timeLeft/60/60/24)+"day(s) left";
+      return Math.round(timeLeft/60/60/24)+" day(s)";
     }
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View>  {/* List of Cities to choose starting point */}    
           <ScrollView>
             <ListItem.Accordion containerStyle={styles.list}
               content={
-                  <ListItem.Content>
-                    <ListItem.Subtitle>Starting at?</ListItem.Subtitle>
-                    <ListItem.Title style={[styles.textDark, {fontWeight: "bold"}]}>{from}</ListItem.Title>
-                  </ListItem.Content>
+                  <>
+                    <ListItem.Content>
+                      <ListItem.Subtitle><Text style={styles.subtitle}>Starting at?</Text></ListItem.Subtitle>
+                      <ListItem.Title style={styles.title}><Text>{from}</Text></ListItem.Title>
+                    </ListItem.Content>
+                  </>
               }
-              isExpanded={toExpanded}
+              icon={<AntDesign name="down" size={24} color="#EDF2F4" />}
+              isExpanded={fromExpanded}
               onPress={() => {
-                setToExpanded(!toExpanded);
+                setFromExpanded(!fromExpanded);
               }}
             >
               {cities.map((city, i) => (
-                <ListItem containerStyle={styles.listItem} key={i} bottomDivider onPress={()=> {setFrom(city);setToExpanded(false)}}>
+                <ListItem containerStyle={styles.listItem} key={i} bottomDivider onPress={()=> {setFrom(city);setFromExpanded(false)}}>
                   <ListItem.Content>
-                    <ListItem.Title style={[styles.textDark, styles.listText]}>{city}</ListItem.Title>
+                    <ListItem.Title style={[styles.textDark, styles.listText]}><Text>{city}</Text></ListItem.Title>
                   </ListItem.Content>
                   <ListItem.Chevron />
                 </ListItem>
@@ -82,10 +104,11 @@ export default function FindRide() {
             <ListItem.Accordion containerStyle={styles.list}
               content={
                   <ListItem.Content>
-                    <ListItem.Subtitle>Going where?</ListItem.Subtitle>
-                    <ListItem.Title style={[styles.textDark, {fontWeight: "bold"}]}>{to}</ListItem.Title>
+                    <ListItem.Subtitle><Text style={styles.subtitle}>Going where?</Text></ListItem.Subtitle>
+                    <ListItem.Title style={styles.title}><Text>{to}</Text></ListItem.Title>
                   </ListItem.Content>
               }
+              icon={<AntDesign name="down" size={24} color="#EDF2F4" />}
               isExpanded={toExpanded}
               onPress={() => {
                 setToExpanded(!toExpanded);
@@ -94,7 +117,7 @@ export default function FindRide() {
               {cities.map((city, i) => (
                 <ListItem containerStyle={styles.listItem} key={i} bottomDivider onPress={()=> {setTo(city);setToExpanded(false)}}>
                   <ListItem.Content>
-                    <ListItem.Title style={[styles.textDark, styles.listText]}>{city}</ListItem.Title>
+                    <ListItem.Title style={[styles.textDark, styles.listText]}><Text>{city}</Text></ListItem.Title>
                   </ListItem.Content>
                   <ListItem.Chevron />
                 </ListItem>
@@ -102,26 +125,31 @@ export default function FindRide() {
             </ListItem.Accordion>
           </ScrollView>
         </View>
-        <View>
+        <View style={styles.botCont}>
         {/* Mapping over our array of rides */}  
-        {rides.map((ride, i) => (
-          <ListItem key={i}>
-            {ride.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="black" /> : ride.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="black" /> : <FontAwesome5 name="bus-alt" size={24} color="black" />}
+        {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (
+        rides.map((ride, i) => (
+          <ListItem key={i} containerStyle={styles.rideListItem} bottomDivider>
+            {ride.rideData.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="#2B2D42" /> : ride.rideData.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="#2B2D42" /> : <FontAwesome5 name="bus-alt" size={24} color="#2B2D42" />}
             <ListItem.Content>
-              <Text>{getTimeLeft(ride.date)}</Text>
-              <ListItem.Title>{ride.from}<FontAwesome name="long-arrow-right" size={24} color="black" />{ride.to}</ListItem.Title>
-              <ListItem.Subtitle>Remaining spots: {ride.seatsTotal-ride.seatsTaken}{"\n"}
-                Price: {ride.price}
+              <Text style={[styles.secondLabel,{color: "#D90429"}]}>Leaves in {getTimeLeft(ride.rideData.date)}</Text>
+              <ListItem.Title><Text style={[styles.label, styles.textDark]}>{ride.rideData.from} <FontAwesome name="long-arrow-right" size={16} color="#333333" /> {ride.rideData.to}</Text></ListItem.Title>
+              <ListItem.Subtitle>
+                <Text style={[styles.subtitle, styles.textDark]}>Remaining spots: {ride.rideData.seatsTotal-ride.rideData.seatsTaken}{"\n"}
+                      Price: {ride.rideData.price}
+                </Text>  
               </ListItem.Subtitle>
             </ListItem.Content>
-            <ListItem.Chevron />
+            <ListItem.Chevron color="#2B2D42"/>
           </ListItem>
-        ))}
-        
+        ))) : ( <Text style={[styles.label, styles.textDark]}>No rides available.</Text> 
+        )}
         </View>
-    </View>
+    </SafeAreaView>
   );
 }
+
+export default FindRide;
 
 const styles = StyleSheet.create({
   container: {
@@ -133,9 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2B2D42",
   },
   botCont: {
-    flex: 3, 
-    justifyContent: "space-evenly", 
-    padding: 16,
+    paddingHorizontal: 16,
   },
   textDark: {
     color: "#333333",
@@ -166,7 +192,6 @@ const styles = StyleSheet.create({
   },
   tile: {
     backgroundColor: "#2B2D42",
-    borderRadius: 8,
     borderBottomWidth: 2,
     borderBottomColor: "#D90429",
     paddingVertical: 8,
@@ -207,11 +232,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D90429",
   },
   list: {
-    borderRadius: 4,
-    borderColor: "#8D99AE",
-    borderWidth: 1,
-    marginTop: 8,
-    backgroundColor: "#8D99AE"
+    borderColor: "#D90429",
+    borderBottomWidth: 3,
+    backgroundColor: "#2B2D42",
   },
   listItem: {
     backgroundColor: "#EDF2F4",
@@ -224,7 +247,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    lineHeight: 24
+    lineHeight: 24,
+    fontWeight: "bold",
   },
   secondLabel: {
     fontSize: 12,
@@ -238,6 +262,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     padding: 8,
-  }
+  },
+  subtitle: {
+    color: "#D90429",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  title: {
+    color: "#EDF2F4",
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  rideListItem: {
+    backgroundColor: "#EDF2F4",
+    paddingHorizontal: 16,
+  },
 });
 

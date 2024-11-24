@@ -13,12 +13,14 @@
     },
     "androidStatusBar": {
       "translucent": false,
+      "backgroundColor": "#EDF2F4"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo_wheelonly.png",
         "backgroundColor": "#EDF2F4"
-      }
+      },
+      "package": "com.anonymous.EasyRider"
     },
     "web": {
       "bundler": "metro",

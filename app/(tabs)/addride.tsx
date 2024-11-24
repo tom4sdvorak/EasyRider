@@ -8,7 +8,17 @@ import { saveRide } from "../../hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 
-export default function AddRide() {
+interface RideData {
+  from: string,
+  to: string,
+  seatsTotal: number,
+  seatsTaken: number,
+  price: number,
+  date: Date,
+  participants: []
+}
+
+function AddRide() {
   const [region, setRegion] = useState({
     latitude: 62.3100964,
     longitude: 25.6890595,
@@ -24,7 +34,7 @@ export default function AddRide() {
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-
+  const router = useRouter();
   //Form data
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -36,10 +46,21 @@ export default function AddRide() {
     setCities(getCities());
   }, []);
 
-  const trySubmit = ()=>{
+  const trySubmit = async ()=>{
     console.log("Pressed submit");
+    const rideToSave: RideData = {
+      from: from,
+      to: to,
+      seatsTotal: seats,
+      seatsTaken: 0,
+      price: price,
+      date: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0),
+      participants: [],
+    }
+
     try {
-      saveRide(from, to, seats, price, new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0));
+      await saveRide(rideToSave);
+      console.log("Saved: ",from, to, seats, price, new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0));
     }
     catch (e) {
       if (e instanceof Error){
@@ -48,11 +69,11 @@ export default function AddRide() {
     }
     finally {
       setError("");
+      router.push("../(tabs)");
     }    
   }
 
   const getCoord = (type: String) => {
-    console.log("Called coorindates"+type);
     if(type === "from" && from != ""){
       const data = getLatLng(from);
       return {latitude: data[0], longitude: data[1]}
@@ -190,7 +211,7 @@ export default function AddRide() {
             <Text style={[styles.secondLabel, styles.textDark]}>Date</Text>
             <Pressable onPressIn={()=>setShowTimePicker(true)}><TextInput readOnly={true} style={styles.input} value={time.getHours()+':'+(time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes())}></TextInput></Pressable>
             {showTimePicker && 
-            <RNDateTimePicker mode="time" value={new Date()} timeZoneName={'Europe/Helsinki'} 
+            <RNDateTimePicker is24Hour={true} mode="time" value={new Date()} timeZoneName={'Europe/Helsinki'} 
                     minimumDate={new Date()} maximumDate={new Date(2030, 10, 20)}
                     onChange={timePickerAction}
             /> }
@@ -205,6 +226,8 @@ export default function AddRide() {
     </View>
   );
 }
+
+export default AddRide;
 
 const styles = StyleSheet.create({
   container: {
