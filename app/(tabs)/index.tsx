@@ -4,37 +4,74 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { getEndingSoonRides, getRecentlyAddedRides } from "@/hooks/storage";
+
+interface RideData {
+  from: string,
+  to: string,
+  seatsTotal: number,
+  seatsTaken: number,
+  price: number,
+  date: Date,
+  participants: []
+}
+
+interface Ride {
+  id: string;
+  rideData: RideData,
+}
 
 export default function HomeScreen() {
   const [date, setDate] = useState(new Date); 
+  const [isLoaded, setLoaded] = useState(false);
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
   const fakeSoon = [{from: "Helsinki", to: "Espoo", date: Date.now()+30000}, {from: "Helsinki", to: "Tampere", date: Date.now()+20*60*1000}, {from: "Lahti", to: "Mikkeli", date: Date.now()+28*60*1000}]
+  const [leavingSoon, setLeavingSoon] = useState<Ride[]>([]);
+  const [recentlyAdded, setRecentlyAdded] = useState<Ride[]>([]);
 
+  // Set clock to update every 1s
   useEffect(()=>{
     const updateDate = () => { 
       setDate(new Date);
+      fetchRides().catch(console.error); // Updates our ride list every second. Ideally would not do it as often, but stops wasting testing time.
     };
     const interval = setInterval(updateDate, 1000);
+    fetchRides().catch(console.error);
     return () => clearInterval(interval);
   }, []);
 
-  const getTimeLeft = function(date: number){
-    const timeLeft = (date-Date.now())/1000;
+  const fetchRides = async () => {
     
+    try {
+      let data : Ride[] = await getEndingSoonRides();
+      setLeavingSoon(data);
+      data = await getRecentlyAddedRides();
+      setRecentlyAdded(data);
+      
+    } catch(e){
+      console.log(e);
+    } finally {
+      setLoaded(true);
+    }  
+  };
+
+  const getTimeLeft = function(date: Date){
+    date = new Date(date);
+    const timeLeft = (date.getTime()-Date.now())/1000;
     if(timeLeft<60){
-      return Math.round(timeLeft)+"s left";
+      return Math.round(timeLeft)+" seconds left";
     }
     else if(timeLeft<3600){
-      return Math.round(timeLeft/60)+"min left";
+      return Math.round(timeLeft/60)+" minutes left";
     }
     else if(timeLeft<86400){
-      return Math.round(timeLeft/60/60)+"hr left";
+      return Math.round(timeLeft/60/60)+" hours left";
     }
     else{
-      return Math.round(timeLeft/60/60/24)+"day(s) left";
+      return Math.round(timeLeft/60/60/24)+" day(s) left";
     }
   }
 
@@ -55,12 +92,12 @@ export default function HomeScreen() {
                 <AntDesign name="arrowright" size={24} color="black" />
               </View>
               <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
-              {fakeSoon.map((ride, i) => (
+              {leavingSoon.map((ride, i) => (
                 <View key={i} style={{marginRight: 8}}>
                   <View style={styles.tile}>
-                    <Text style={styles.tileText}>{ride.from+"\nto\n"+ride.to}</Text>
+                    <Text style={styles.tileText}>{ride.rideData.from+"\nto\n"+ride.rideData.to}</Text>
                   </View>
-                  <Text style={styles.subTileText}>{getTimeLeft(ride.date)}</Text>
+                  <Text style={styles.subTileText}>{getTimeLeft(ride.rideData.date)}</Text>
                 </View>
               ))}
               </ScrollView>
@@ -71,12 +108,12 @@ export default function HomeScreen() {
                 <AntDesign name="arrowright" size={24} color="black" />
               </View>
               <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
-              {fakeSoon.map((ride, i) => (
+              {recentlyAdded.map((ride, i) => (
                 <View key={i} style={{marginRight: 8}}>
                   <View style={styles.tile}>
-                    <Text style={styles.tileText}>{ride.from+"\nto\n"+ride.to}</Text>
+                    <Text style={styles.tileText}>{ride.rideData.from+"\nto\n"+ride.rideData.to}</Text>
                   </View>
-                  <Text style={styles.subTileText}>{getTimeLeft(ride.date)}</Text>
+                  <Text style={styles.subTileText}>{getTimeLeft(ride.rideData.date)}</Text>
                 </View>
               ))}
               </ScrollView>

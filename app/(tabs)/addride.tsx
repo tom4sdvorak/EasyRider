@@ -26,20 +26,23 @@ function AddRide() {
     longitudeDelta: 7,
   });
 
+  const dateNow = new Date();
   const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [fromExpanded, setFromExpanded] = useState(false);
   const [toExpanded, setToExpanded] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
+  const [date, setDate] = useState(new Date(dateNow.getTime() + 3600000));
+  const [time, setTime] = useState(new Date(dateNow.getTime() + 3600000));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const router = useRouter();
+
+
   //Form data
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [seats, setSeats] = useState(1);
-  const [price, setPrice] = useState(1);
+  const [seats, setSeats] = useState("1");
+  const [price, setPrice] = useState("1");
   
 
   useEffect(()=>{
@@ -51,11 +54,28 @@ function AddRide() {
     const rideToSave: RideData = {
       from: from,
       to: to,
-      seatsTotal: seats,
+      seatsTotal: parseInt(seats),
       seatsTaken: 0,
-      price: price,
+      price: parseInt(price),
       date: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0),
       participants: [],
+    }
+
+    if(rideToSave.from === "" || rideToSave.to === ""){
+      setError("Incorrect city selected");
+      return;
+    }
+    else if(isNaN(rideToSave.seatsTotal) || rideToSave.seatsTotal < 1 || rideToSave.seatsTotal > 99){
+      setError("Number of seats must be between 1 and 99.");
+      return;
+    }
+    else if(isNaN(rideToSave.price) || rideToSave.price < 0 || rideToSave.price > 1000){
+      setError("Price has to be between 0 and 1000€.");
+      return;
+    }
+    else if(rideToSave.date.getTime() <= dateNow.getTime()){
+      setError("Time of leaving cannot be so soon");
+      return;
     }
 
     try {
@@ -100,19 +120,22 @@ function AddRide() {
 
   const handleSeatsInput = (newData: string) => {
     const numericData = parseInt(newData, 10);
-    if (isNaN(numericData) || numericData < 1 || numericData > 99) {
+    /*if (isNaN(numericData)) {
       setError('Number of seats should be between 1 and 99.');
     } else {
       setSeats(numericData);
-    }
+    }*/
+   console.log(newData + " or " + numericData);
+    setSeats(numericData);
   }
 
   const handlePriceInput = (newData: string) => {
     const numericData = parseInt(newData, 10);
-    if (isNaN(numericData) || numericData < 0 || numericData > 1000) {
+    if (isNaN(numericData)) {
       setError('Price should be between 0 and 1000€.');
     } else {
       setPrice(numericData);
+      setError("");
     }
   }
 
@@ -188,7 +211,7 @@ function AddRide() {
         <View style={{flexDirection: "row", justifyContent: "space-between"}}>
           <View style={{flex: 1, marginRight: 16}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Seats</Text>
-            <TextInput inputMode="numeric" keyboardType='numeric' value={seats.toString()} onChangeText={handleSeatsInput} style={styles.input}></TextInput>
+            <TextInput inputMode="numeric" keyboardType='numeric' value={seats.toString()} onChangeText={(e)=>setSeats(e)} style={styles.input}></TextInput>
           </View>
           {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
@@ -204,15 +227,15 @@ function AddRide() {
         <View style={{flexDirection: "row", justifyContent: "space-between"}}>
           <View style={{flex: 1, marginRight: 16}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Price (€)</Text>
-            <TextInput inputMode="numeric" keyboardType='numeric' value={price.toString()} onChangeText={handlePriceInput} style={styles.input}></TextInput>
+            <TextInput inputMode="numeric" keyboardType='numeric' value={price.toString()} onChangeText={(e)=>setPrice(e)} style={styles.input}></TextInput>
           </View>
           {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
-            <Text style={[styles.secondLabel, styles.textDark]}>Date</Text>
+            <Text style={[styles.secondLabel, styles.textDark]}>Time</Text>
             <Pressable onPressIn={()=>setShowTimePicker(true)}><TextInput readOnly={true} style={styles.input} value={time.getHours()+':'+(time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes())}></TextInput></Pressable>
             {showTimePicker && 
-            <RNDateTimePicker is24Hour={true} mode="time" value={new Date()} timeZoneName={'Europe/Helsinki'} 
-                    minimumDate={new Date()} maximumDate={new Date(2030, 10, 20)}
+            <RNDateTimePicker is24Hour={true} mode="time" value={new Date(dateNow.getTime() + 3600000)} timeZoneName={'Europe/Helsinki'} 
+                    minimumDate={new Date(dateNow.getTime() + 3600000)} maximumDate={new Date(2030, 10, 20)}
                     onChange={timePickerAction}
             /> }
           </View>

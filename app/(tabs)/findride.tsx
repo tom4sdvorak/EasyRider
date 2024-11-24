@@ -34,15 +34,17 @@ function FindRide() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoaded, setLoaded] = useState(false);
 
-
   useEffect(()=>{
     setCities(getCities());
+  }, []);
+
+  useEffect(()=>{
     fetchRides().catch(console.error);
-    console.log("running useeffect");
   }, [from, to]);
   
   const fetchRides = async () => {
     try {
+      setLoaded(false);
       const data : Ride[] = await getAllRides(from, to);
       setRides(data);
     } catch(e){
@@ -71,7 +73,8 @@ function FindRide() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>  {/* List of Cities to choose starting point */}    
+      {/* List of Cities to choose starting point */}   
+      <View>
           <ScrollView>
             <ListItem.Accordion containerStyle={styles.list}
               content={
@@ -99,7 +102,8 @@ function FindRide() {
             </ListItem.Accordion>
           </ScrollView>
         </View>
-        <View>  {/* List of Cities to choose destination */}    
+        {/* List of Cities to choose destination */} 
+        <View> 
           <ScrollView>
             <ListItem.Accordion containerStyle={styles.list}
               content={
@@ -125,25 +129,29 @@ function FindRide() {
             </ListItem.Accordion>
           </ScrollView>
         </View>
-        <View style={styles.botCont}>
         {/* Mapping over our array of rides */}  
-        {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (
-        rides.map((ride, i) => (
-          <ListItem key={i} containerStyle={styles.rideListItem} bottomDivider>
-            {ride.rideData.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="#2B2D42" /> : ride.rideData.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="#2B2D42" /> : <FontAwesome5 name="bus-alt" size={24} color="#2B2D42" />}
-            <ListItem.Content>
-              <Text style={[styles.secondLabel,{color: "#D90429"}]}>Leaves in {getTimeLeft(ride.rideData.date)}</Text>
-              <ListItem.Title><Text style={[styles.label, styles.textDark]}>{ride.rideData.from} <FontAwesome name="long-arrow-right" size={16} color="#333333" /> {ride.rideData.to}</Text></ListItem.Title>
-              <ListItem.Subtitle>
-                <Text style={[styles.subtitle, styles.textDark]}>Remaining spots: {ride.rideData.seatsTotal-ride.rideData.seatsTaken}{"\n"}
+        <View style={styles.botCont}>
+          {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (
+            rides.map((ride, i) => (
+              <ListItem key={i} containerStyle={styles.rideListItem} bottomDivider>
+                {ride.rideData.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="#2B2D42" /> : ride.rideData.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="#2B2D42" /> : <FontAwesome5 name="bus-alt" size={24} color="#2B2D42" />}
+                <ListItem.Content>
+                  <Text style={[styles.secondLabel,{color: "#D90429"}]}>Leaves in {getTimeLeft(ride.rideData.date)}</Text>
+                  <ListItem.Title>
+                    <Text style={[styles.label, styles.textDark]}>{ride.rideData.from} <FontAwesome name="long-arrow-right" size={16} color="#333333" /> {ride.rideData.to}</Text>
+                  </ListItem.Title>
+                  <ListItem.Subtitle>
+                    <Text style={[styles.subtitle, styles.textDark]}>
+                      Remaining spots: {ride.rideData.seatsTotal-ride.rideData.seatsTaken}{"\n"}
                       Price: {ride.rideData.price}
-                </Text>  
-              </ListItem.Subtitle>
-            </ListItem.Content>
-            <ListItem.Chevron color="#2B2D42"/>
-          </ListItem>
-        ))) : ( <Text style={[styles.label, styles.textDark]}>No rides available.</Text> 
-        )}
+                    </Text>
+                  </ListItem.Subtitle>
+                </ListItem.Content>
+                <ListItem.Chevron color="#2B2D42"/>
+              </ListItem>
+            ))) : ( 
+            <Text style={[styles.label, styles.textDark]}>No rides available.</Text>
+          )}
         </View>
     </SafeAreaView>
   );
@@ -278,4 +286,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
 });
-

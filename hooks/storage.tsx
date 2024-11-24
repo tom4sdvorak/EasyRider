@@ -67,3 +67,17 @@ export const saveRide = async (rideToSave: RideData) => {
         return true;
     }
 }
+
+//Get leaving soon rides
+export const getEndingSoonRides = async () => {
+    const allRides = await getAllRides();
+    allRides.sort((a, b) => a.rideData.date.getTime() - b.rideData.date.getTime());
+    return allRides;
+}
+
+//Get recently added rides
+export const getRecentlyAddedRides = async () => {
+    const allRides = await getAllRides();
+    allRides.sort((a, b) => Number(b.id) - Number(a.id));
+    return allRides;
+}
