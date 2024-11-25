@@ -62,8 +62,8 @@ export const saveRide = async (rideToSave: RideData) => {
         await AsyncStorage.setItem(uniqueId.toString(), JSON.stringify(rideToSave));
       } catch (e) {
         console.log(e);
-    }finally {
-        console.log("Saved ride");
+    } finally {
+        console.log("Saved ride: " + uniqueId);
         return true;
     }
 }
@@ -82,11 +82,16 @@ export const getRecentlyAddedRides = async () => {
     return allRides;
 }
 
-export const getRideById = async(id: string) => {
+export const getRideById = async(id: string):Promise<RideData> => {
     try {
         const ride = await AsyncStorage.getItem(id);
         if (ride != null){
-            return {id: ride[0],rideData: JSON.parse(ride[1])};
+            let newRide:RideData = JSON.parse(ride);
+            newRide.date = new Date(newRide.date);
+            return Promise.resolve(newRide);
+        }
+        else{
+            return Promise.reject(new Error("Ride not found"));
         }
     }
     catch (e){

@@ -7,7 +7,7 @@ import { Text, View, StyleSheet, Image, Pressable, ScrollView} from "react-nativ
 import MapView, { Marker } from "react-native-maps";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 interface RideData {
@@ -33,6 +33,7 @@ export default function RecentlyAdded() {
   const [to, setTo] = useState("");
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoaded, setLoaded] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(()=>{
     fetchRides().catch(console.error);
@@ -68,7 +69,7 @@ export default function RecentlyAdded() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {marginTop: insets.top}]}>
         {/* Mapping over our array of rides */}  
         <ScrollView style={styles.botCont}>
           {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (

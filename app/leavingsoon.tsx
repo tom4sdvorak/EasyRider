@@ -9,6 +9,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface RideData {
   from: string,
@@ -25,6 +26,8 @@ interface Ride {
   rideData: RideData,
 }
 
+
+
 export default function LeavingSoon() {
   const [fromExpanded, setFromExpanded] = useState(false);
   const [toExpanded, setToExpanded] = useState(false);
@@ -33,6 +36,7 @@ export default function LeavingSoon() {
   const [to, setTo] = useState("");
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoaded, setLoaded] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(()=>{
     fetchRides().catch(console.error);
@@ -68,7 +72,7 @@ export default function LeavingSoon() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {marginTop: insets.top}]}>
         {/* Mapping over our array of rides */}  
         <ScrollView style={styles.botCont}>
           {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (

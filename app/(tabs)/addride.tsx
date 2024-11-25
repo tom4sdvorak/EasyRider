@@ -122,7 +122,7 @@ function AddRide() {
   }
 
   useEffect(()=>{
-    let newRegion = region;
+    let newRegion = { ...region };
     if(markerFromCoordinates.latitude > 0 && markerToCoordinates.latitude > 0){
       newRegion.latitude = (markerFromCoordinates.latitude+markerToCoordinates.latitude)/2;
       newRegion.longitude = (markerFromCoordinates.longitude+markerToCoordinates.longitude)/2;

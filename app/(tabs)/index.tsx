@@ -96,7 +96,7 @@ export default function HomeScreen() {
               <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
               {leavingSoon.map((ride, i) => (
                 <View key={i} style={{marginRight: 8}}>
-                  <TouchableOpacity onPress={()=>router.navigate("../ride/1")}>
+                  <TouchableOpacity onPress={()=>router.navigate(`/ride/${ride.id}`)}>
                     <View style={styles.tile}>
                       <Text style={styles.tileText}>{ride.rideData.from+"\nto\n"+ride.rideData.to}</Text>
                     </View>
