@@ -30,6 +30,9 @@ export default function RootLayout() {
       <Stack.Screen options={{headerTransparent: true, headerTitle: "Login"}} name="login" />
       <Stack.Screen options={{headerTransparent: true, headerTitle: "Register"}} name="register" />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen options={{headerTitle: "Leaving soon", headerStyle: {backgroundColor: "#2B2D42"}, headerTitleStyle: {color: "#EDF2F4"}, headerTintColor: "#EDF2F4"}} name="leavingsoon" />
+      <Stack.Screen options={{headerTitle: "Recently added", headerStyle: {backgroundColor: "#2B2D42"}, headerTitleStyle: {color: "#EDF2F4"}, headerTintColor: "#EDF2F4"}} name="recentlyadded" />
+      <Stack.Screen name="ride" options={{ headerShown: false }} />
     </Stack>
   );
 }

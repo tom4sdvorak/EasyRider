@@ -2,11 +2,12 @@ import { Redirect, useRouter } from "expo-router";
 import { Text, View, StyleSheet, Image, Pressable, Button, TextInput, FlatList, ScrollView} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCities, getLatLng } from "../../hooks/location";
 import { saveRide } from "../../hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface RideData {
   from: string,
@@ -22,8 +23,8 @@ function AddRide() {
   const [region, setRegion] = useState({
     latitude: 62.3100964,
     longitude: 25.6890595,
-    latitudeDelta: 7,
-    longitudeDelta: 7,
+    latitudeDelta: 3,
+    longitudeDelta: 3,
   });
 
   const dateNow = new Date();
@@ -36,6 +37,10 @@ function AddRide() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const router = useRouter();
+  const mapRef = useRef(null);
+  const [markerFromCoordinates, setMarkerFromCoordinates] = useState({latitude: 0, longitude: 0});
+  const [markerToCoordinates, setMarkerToCoordinates] = useState({latitude: 0, longitude: 0});
+  const [changeRegion, setChangeRegion] = useState(false);
 
 
   //Form data
@@ -48,6 +53,17 @@ function AddRide() {
   useEffect(()=>{
     setCities(getCities());
   }, []);
+
+  useEffect(()=>{
+    getCoord();
+  }, [from, to]);
+
+  useEffect(()=>{
+    console.log("Moving map");
+    if(mapRef.current){
+      (mapRef.current as MapView).animateToRegion(region);
+    }
+  }, [changeRegion]);
 
   const trySubmit = async ()=>{
     console.log("Pressed submit");
@@ -93,20 +109,37 @@ function AddRide() {
     }    
   }
 
-  const getCoord = (type: String) => {
-    if(type === "from" && from != ""){
-      const data = getLatLng(from);
-      return {latitude: data[0], longitude: data[1]}
+  const getCoord = () => {
+    let data = {latitude: 0, longitude: 0};    
+    if(from != ""){
+      data = getLatLng(from);
+      setMarkerFromCoordinates(data);  
     }
-    else if(type === "to" && to != ""){
-      const data = getLatLng(to);
-      return {latitude: data[0], longitude: data[1]}
+    if(to != ""){
+      data = getLatLng(to);
+      setMarkerToCoordinates(data);  
     }
-    else{
-      return {latitude: 0, longitude: 0}
+  }
+
+  useEffect(()=>{
+    let newRegion = region;
+    if(markerFromCoordinates.latitude > 0 && markerToCoordinates.latitude > 0){
+      newRegion.latitude = (markerFromCoordinates.latitude+markerToCoordinates.latitude)/2;
+      newRegion.longitude = (markerFromCoordinates.longitude+markerToCoordinates.longitude)/2;
+      newRegion.latitudeDelta = Math.abs(markerToCoordinates.latitude-markerFromCoordinates.latitude)+0.5;
+      newRegion.longitudeDelta = Math.abs(markerToCoordinates.longitude-markerFromCoordinates.longitude)+0.5;
+    }
+    else if(markerFromCoordinates.latitude > 0){
+      newRegion = {...newRegion, ... markerFromCoordinates};
+    }
+    else if(markerToCoordinates.latitude > 0){
+      newRegion = {...newRegion, ... markerToCoordinates};
     }
     
-  }
+    console.log("Markers: " + markerFromCoordinates.latitude + " " + markerToCoordinates.latitude);
+    setRegion(newRegion);
+    setChangeRegion(!changeRegion);
+  },[markerFromCoordinates,markerToCoordinates]);
 
   const datePickerAction = (event: DateTimePickerEvent, newDate: Date)=>{
     setDate(newDate);
@@ -118,41 +151,48 @@ function AddRide() {
     setShowTimePicker(false);
   }
 
-  const handleSeatsInput = (newData: string) => {
-    const numericData = parseInt(newData, 10);
-    /*if (isNaN(numericData)) {
-      setError('Number of seats should be between 1 and 99.');
-    } else {
-      setSeats(numericData);
-    }*/
-   console.log(newData + " or " + numericData);
-    setSeats(numericData);
-  }
-
-  const handlePriceInput = (newData: string) => {
-    const numericData = parseInt(newData, 10);
-    if (isNaN(numericData)) {
-      setError('Price should be between 0 and 1000€.');
-    } else {
-      setPrice(numericData);
-      setError("");
-    }
-  }
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="light" backgroundColor="#2B2D42" />
       
       {/* Map portion */}
       <View style={styles.topCont}>
-        <MapView style={{flex: 1}} initialRegion={region}>
-          {to==="" ? <></> : <Marker pinColor="#D90429" coordinate={getCoord("to")}></Marker>}
-          {from==="" ? <></> : <Marker pinColor="#2B2D42" coordinate={getCoord("from")}></Marker>}
+        <MapView style={{flex: 1}} initialRegion={region} ref={mapRef}>
+          {from==="" ? <></> : <Marker pinColor="#2B2D42" coordinate={markerFromCoordinates}></Marker>}
+          {to==="" ? <></> : <Marker pinColor="#D90429" coordinate={markerToCoordinates}></Marker>}
         </MapView>
       </View>
 
       {/* Form portion */}
       <View style={styles.botCont}>
+               
+        <View>          
+          {/* List of cities to choose starting location */}
+          <Text style={[styles.label, styles.textDark]}>From?</Text>
+          <ScrollView>
+            <ListItem.Accordion containerStyle={styles.list}
+              content={
+                  <ListItem.Content>
+                    <ListItem.Title style={[styles.textDark, {fontWeight: "bold"}]}>{from}</ListItem.Title>
+                  </ListItem.Content>
+              }
+              isExpanded={fromExpanded}
+              onPress={() => {
+                setFromExpanded(!fromExpanded);
+              }}
+            >
+              {cities.map((city, i) => (
+                <ListItem containerStyle={styles.listItem} key={i} bottomDivider onPress={()=> {setFrom(city);setFromExpanded(false)}}>
+                  <ListItem.Content>
+                    <ListItem.Title style={[styles.textDark, styles.listText]}>{city}</ListItem.Title>
+                  </ListItem.Content>
+                  <ListItem.Chevron />
+                </ListItem>
+              ))}
+              <View style={{paddingBottom: 150}}></View>
+            </ListItem.Accordion>
+          </ScrollView>
+        </View>
         <View>      
           {/* List of Cities to choose destination */}
           <Text style={[styles.label, styles.textDark]}>Where are you going?</Text>
@@ -176,38 +216,10 @@ function AddRide() {
                   <ListItem.Chevron />
                 </ListItem>
               ))}
+              <View style={{paddingBottom: 150}}></View>
             </ListItem.Accordion>
           </ScrollView>
-        </View>
-        
-        <View style={{width: "100%"}}>
-          
-          {/* List of cities to choose starting location */}
-          <Text style={[styles.label, styles.textDark]}>From?</Text>
-          <ScrollView>
-            <ListItem.Accordion containerStyle={styles.list}
-              content={
-                  <ListItem.Content>
-                    <ListItem.Title style={[styles.textDark, {fontWeight: "bold"}]}>{from}</ListItem.Title>
-                  </ListItem.Content>
-              }
-              isExpanded={fromExpanded}
-              onPress={() => {
-                setFromExpanded(!fromExpanded);
-              }}
-            >
-              {cities.map((city, i) => (
-                <ListItem containerStyle={styles.listItem} key={i} bottomDivider onPress={()=> {setFrom(city);setFromExpanded(false)}}>
-                  <ListItem.Content>
-                    <ListItem.Title style={[styles.textDark, styles.listText]}>{city}</ListItem.Title>
-                  </ListItem.Content>
-                  <ListItem.Chevron />
-                </ListItem>
-              ))}
-            </ListItem.Accordion>
-          </ScrollView>
-        </View>
-        
+        </View>        
         <View style={{flexDirection: "row", justifyContent: "space-between"}}>
           <View style={{flex: 1, marginRight: 16}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Seats</Text>
@@ -246,7 +258,7 @@ function AddRide() {
         </Pressable>
       </View>
       
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -324,7 +336,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderBottomWidth: 2,
     width: "100%",
-    margin: 8,
   },
   buttonLabel: {
     fontSize: 24,
@@ -340,7 +351,7 @@ const styles = StyleSheet.create({
     borderColor: "#8D99AE",
     borderWidth: 1,
     marginTop: 8,
-    backgroundColor: "#8D99AE"
+    backgroundColor: "#8D99AE",
   },
   listItem: {
     backgroundColor: "#EDF2F4",

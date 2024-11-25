@@ -81,3 +81,17 @@ export const getRecentlyAddedRides = async () => {
     allRides.sort((a, b) => Number(b.id) - Number(a.id));
     return allRides;
 }
+
+export const getRideById = async(id: string) => {
+    try {
+        const ride = await AsyncStorage.getItem(id);
+        if (ride != null){
+            return {id: ride[0],rideData: JSON.parse(ride[1])};
+        }
+    }
+    catch (e){
+        console.log(e);
+        throw e;
+    }
+    
+}

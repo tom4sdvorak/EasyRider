@@ -1,5 +1,5 @@
-import { Redirect, useRouter } from "expo-router";
-import { Text, View, StyleSheet, Image, Pressable, ScrollView} from "react-native";
+import { Link, Redirect, useRouter } from "expo-router";
+import { Text, View, StyleSheet, Image, Pressable, ScrollView, TouchableOpacity} from "react-native";
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
@@ -28,9 +28,9 @@ export default function HomeScreen() {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const fakeSoon = [{from: "Helsinki", to: "Espoo", date: Date.now()+30000}, {from: "Helsinki", to: "Tampere", date: Date.now()+20*60*1000}, {from: "Lahti", to: "Mikkeli", date: Date.now()+28*60*1000}]
   const [leavingSoon, setLeavingSoon] = useState<Ride[]>([]);
   const [recentlyAdded, setRecentlyAdded] = useState<Ride[]>([]);
+  const router = useRouter();
 
   // Set clock to update every 1s
   useEffect(()=>{
@@ -47,9 +47,9 @@ export default function HomeScreen() {
     
     try {
       let data : Ride[] = await getEndingSoonRides();
-      setLeavingSoon(data);
+      setLeavingSoon(data.slice(0,5));
       data = await getRecentlyAddedRides();
-      setRecentlyAdded(data);
+      setRecentlyAdded(data.slice(0,5));
       
     } catch(e){
       console.log(e);
@@ -87,26 +87,32 @@ export default function HomeScreen() {
           </View>
           <View style={styles.botCont}>
             <View style={{height: 176}}>
-              <View style={{flexDirection: "row", alignItems: "center", paddingVertical: 10}}>
-                <Text style={styles.sectionTitle}>Leaving soon</Text>
-                <AntDesign name="arrowright" size={24} color="black" />
-              </View>
+              <TouchableOpacity onPress={()=>router.navigate("../leavingsoon")}>
+                <View style={{flexDirection: "row", alignItems: "center", paddingVertical: 10}}>
+                  <Text style={styles.sectionTitle}>Leaving soon</Text>
+                  <AntDesign name="arrowright" size={24} color="black" />
+                </View>
+              </TouchableOpacity>
               <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
               {leavingSoon.map((ride, i) => (
                 <View key={i} style={{marginRight: 8}}>
-                  <View style={styles.tile}>
-                    <Text style={styles.tileText}>{ride.rideData.from+"\nto\n"+ride.rideData.to}</Text>
-                  </View>
-                  <Text style={styles.subTileText}>{getTimeLeft(ride.rideData.date)}</Text>
+                  <TouchableOpacity onPress={()=>router.navigate("../ride/1")}>
+                    <View style={styles.tile}>
+                      <Text style={styles.tileText}>{ride.rideData.from+"\nto\n"+ride.rideData.to}</Text>
+                    </View>
+                    <Text style={styles.subTileText}>{getTimeLeft(ride.rideData.date)}</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
               </ScrollView>
             </View>
             <View style={{height: 176}}>
-              <View style={{flexDirection: "row", alignItems: "center", paddingVertical: 10}}>
-                <Text style={styles.sectionTitle}>Recently added</Text>
-                <AntDesign name="arrowright" size={24} color="black" />
-              </View>
+            <TouchableOpacity onPress={()=>router.navigate("../recentlyadded")}>
+                <View style={{flexDirection: "row", alignItems: "center", paddingVertical: 10}}>
+                  <Text style={styles.sectionTitle}>Recently added</Text>
+                  <AntDesign name="arrowright" size={24} color="black" />
+                </View>
+              </TouchableOpacity>
               <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
               {recentlyAdded.map((ride, i) => (
                 <View key={i} style={{marginRight: 8}}>
