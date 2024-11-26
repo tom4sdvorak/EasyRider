@@ -1,10 +1,13 @@
-import { Link, Redirect, useRouter } from "expo-router";
+import { Link, Redirect, Stack, Tabs, useNavigation, useRouter } from "expo-router";
 import { Text, View, StyleSheet, Image, Pressable, ScrollView, TouchableOpacity} from "react-native";
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { getEndingSoonRides, getRecentlyAddedRides } from "@/hooks/storage";
+import useAuth from "@/hooks/useAuth";
+import { Button, Dialog } from '@rneui/themed';
 
 interface RideData {
   from: string,
@@ -13,7 +16,7 @@ interface RideData {
   seatsTaken: number,
   price: number,
   date: Date,
-  participants: []
+  participants: string[]
 }
 
 interface Ride {
@@ -31,6 +34,9 @@ export default function HomeScreen() {
   const [leavingSoon, setLeavingSoon] = useState<Ride[]>([]);
   const [recentlyAdded, setRecentlyAdded] = useState<Ride[]>([]);
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const [dialogVisible, setDialogVisible] = useState(false);
+
 
   // Set clock to update every 1s
   useEffect(()=>{
@@ -75,11 +81,23 @@ export default function HomeScreen() {
     }
   }
 
+  const toggleDialog = () => {
+    setDialogVisible(!dialogVisible);
+  };
+
+  const goLogOut = ()=>{
+    logout();
+    router.dismissAll();
+  }
+
   return (
     <SafeAreaView style={styles.container}>
           <StatusBar style="light" backgroundColor="#2B2D42" />
           <View style={styles.topCont}>
-            <Text style={[styles.textLight, {fontSize: 36, lineHeight: 44}]}>Hey, <Text style={{color: "#D90429"}}>User</Text></Text>
+            <View style={{flexDirection: "row", justifyContent: 'space-between'}}>
+              {user ? <Text style={[styles.textLight, {fontSize: 36, lineHeight: 44}]}>Hey, <Text style={{color: "#D90429"}}>{user.displayName}</Text></Text> : <Text style={[styles.textLight, {fontSize: 36, lineHeight: 44}]}>Hey, <Text style={{color: "#D90429"}}>Anonymous</Text></Text>}
+              <Pressable onPress={toggleDialog}><EvilIcons name="user" size={44} color="#EDF2F4" /></Pressable>
+            </View>
             <View style={{flex: 1, justifyContent: "center"}}>
               <Text style={[styles.textLight, styles.date]}>{months[date.getMonth()]} {date.getDate()}</Text>
               <Text style={styles.clock}>{date.getHours()}:{date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()}</Text>
@@ -125,7 +143,21 @@ export default function HomeScreen() {
               </ScrollView>
             </View>
           </View>
-          
+          <Dialog
+            isVisible={dialogVisible}
+            onBackdropPress={toggleDialog}
+            overlayStyle={{backgroundColor: "#EDF2F4"}}
+          >
+            <Dialog.Title title="Account menu" />
+            <Text>Name: {user? user.displayName : ""}</Text>
+            <Text>Email: {user? user.email : ""}</Text>
+            <Dialog.Actions>
+              <Button buttonStyle={[styles.button, {borderColor: "#D90429"}]} titleStyle={[styles.buttonLabel, {color: "#D90429",}]} title="Sign out" type="outline"
+                icon={<AntDesign name="logout" size={16} color="#D90429" />}
+                onPress={goLogOut}
+              />
+            </Dialog.Actions>
+          </Dialog>
     </SafeAreaView>
   );
 }
@@ -193,6 +225,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: "bold",
     textAlign: "center"
-  }
+  },
+  button: {
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
 });
 

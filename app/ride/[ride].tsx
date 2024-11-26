@@ -4,7 +4,7 @@ import MapView, { Marker } from "react-native-maps";
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from "react";
 import { getCities, getLatLng } from "@/hooks/location";
-import { saveRide } from "@/hooks/storage";
+import { deleteRide, saveRide } from "@/hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +12,7 @@ import { useRoute } from "@react-navigation/native";
 import { getRideById } from "@/hooks/storage";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Button } from '@rneui/themed';
+import useAuth from "@/hooks/useAuth";
 
 interface RideData {
   from: string,
@@ -20,7 +21,7 @@ interface RideData {
   seatsTaken: number,
   price: number,
   date: Date,
-  participants: []
+  participants: string[]
 }
 
 interface Ride {
@@ -35,6 +36,7 @@ export default function RideDetails() {
     latitudeDelta: 6,
     longitudeDelta: 6,
   });
+  const { user } = useAuth();
   const [countdown, setCountdown] = useState({days: 0, hours: 0, minutes: 0, seconds: 0}); 
   const local = useLocalSearchParams();
   const [rideData, setRideData] = useState<RideData>();
@@ -45,6 +47,9 @@ export default function RideDetails() {
   const [isLoaded, setIsLoaded] = useState(false);
   const insets = useSafeAreaInsets();
   const [joined, setJoined] = useState(false);
+  const router = useRouter();
+  const [buttonDisabled, setButtonDisabled ] = useState(true);
+  const [localError, setLocalError ] = useState("");
 
   useEffect(()=>{
     fetchRide().catch(console.error);;
@@ -89,6 +94,7 @@ export default function RideDetails() {
 
   useEffect(()=>{
     setIsLoaded(true);
+    setButtonDisabled(false);
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
@@ -100,10 +106,51 @@ export default function RideDetails() {
       setRideData(ride);
       setFromCoord(getLatLng(ride.from));
       setToCoord(getLatLng(ride.to));
+      setJoined(ride.participants.includes(user.email));
     }
     catch (e){
       console.log(e);
     }
+  }
+
+  // Adds user to ride list
+  const joinRide = () => {
+    setButtonDisabled(true);
+    const rideToSave: RideData = {...rideData} as RideData;
+    if(rideToSave.seatsTaken >= rideToSave.seatsTotal){
+      setLocalError("This ride is full.")
+    }
+    else{
+      rideToSave.participants.push(user.email);
+      rideToSave.seatsTaken += 1;
+      saveRide(rideToSave,local.ride.toString());
+      setRideData(rideToSave);
+      setJoined(true);
+    }
+    setButtonDisabled(false);    
+  }
+
+  // Removes user from ride list
+  const leaveRide = () => {
+    setButtonDisabled(true);
+    const rideToSave: RideData = {...rideData} as RideData;
+    if(rideToSave.participants.length > 0){ // First confirm there are participants
+      if(rideToSave.participants[0] === user.email){ // Then check if owner (on first position) is trying to leave and delete ride instead
+        deleteRide(local.ride.toString());
+        router.replace("/(tabs)");
+      }
+      else{ // Otherwise just remove user and update ride data
+        rideToSave.participants = rideToSave.participants.filter(item => item !== user.email);
+        rideToSave.seatsTaken -= 1;
+        setRideData(rideToSave);
+        setJoined(false);
+        saveRide(rideToSave,local.ride.toString());
+      }
+    }
+    else{
+      setLocalError("You aren't in this ride.");
+    }
+    setButtonDisabled(false);
   }
 
     return (
@@ -151,16 +198,17 @@ export default function RideDetails() {
                   <Text style={[styles.textDark, {fontSize: 16, textAlign: "left", lineHeight: 24}]}>Time of departure</Text><Text style={[styles.textDark, {fontSize: 16, textAlign: "right", lineHeight: 24}]}>{rideData.date.getHours()+':'+rideData.date.getMinutes()}</Text>
                 </View>
               </View>
-              <View style={{flexDirection: "row", justifyContent: "flex-end"}}>
+              <View style={{flexDirection: "row", justifyContent: "space-between"}}>
+                {localError != '' ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{localError}</Text> : <Text></Text>}
                 {!joined ? 
-                <Button buttonStyle={[styles.button,{borderColor: "#008000"}]} titleStyle={[styles.buttonLabel,{color: "#008000"}]} title="Join Ride" type="outline"
+                <Button disabled={buttonDisabled} buttonStyle={[styles.button,{borderColor: "#008000"}]} titleStyle={[styles.buttonLabel,{color: "#008000"}]} title="Join Ride" type="outline"
                 icon={<AntDesign name="plus" size={24} color="#008000" />}
-                onPress={()=>setJoined(true)}
+                onPress={joinRide}
                 />
                 :
-                <Button buttonStyle={[styles.button, {borderColor: "#D90429"}]} titleStyle={[styles.buttonLabel, {color: "#D90429",}]} title="Leave Ride" type="outline"
+                <Button disabled={buttonDisabled} buttonStyle={[styles.button, {borderColor: "#D90429"}]} titleStyle={[styles.buttonLabel, {color: "#D90429",}]} title="Leave Ride" type="outline"
                 icon={<AntDesign name="plus" size={24} color="#D90429" />}
-                onPress={()=>setJoined(false)}
+                onPress={leaveRide}
                 />
                 }
               </View>

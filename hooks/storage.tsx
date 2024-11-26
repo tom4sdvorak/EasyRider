@@ -7,7 +7,7 @@ interface RideData {
     seatsTaken: number,
     price: number,
     date: Date,
-    participants: []
+    participants: string[]
 }
 
 interface Ride {
@@ -56,15 +56,30 @@ export const getAllRides = async (cityFrom?:string, cityTo?:string) : Promise<Ri
 }
 
 //Save new ride
-export const saveRide = async (rideToSave: RideData) => {
-    const uniqueId = Date.now();
+export const saveRide = async (rideToSave: RideData, id? : string) => {
+    let uniqueId;
+    if(id === undefined){
+        uniqueId = (Date.now()).toString();
+    }
+    else{
+        uniqueId = id;
+    }
     try {
-        await AsyncStorage.setItem(uniqueId.toString(), JSON.stringify(rideToSave));
+        await AsyncStorage.setItem(uniqueId, JSON.stringify(rideToSave));
       } catch (e) {
         console.log(e);
     } finally {
-        console.log("Saved ride: " + uniqueId);
         return true;
+    }
+}
+
+// Remove ride
+export const deleteRide = async(id: string) => {  
+    try{
+        await AsyncStorage.removeItem(id);
+    } catch (e) {
+        console.log(e);
+        throw e;
     }
 }
 

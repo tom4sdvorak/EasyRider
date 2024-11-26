@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import { Text, View, StyleSheet, Image, Pressable, Button, TextInput, FlatList, ScrollView} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { StatusBar } from 'expo-status-bar';
@@ -7,7 +7,8 @@ import { getCities, getLatLng } from "../../hooks/location";
 import { saveRide } from "../../hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import useAuth from "@/hooks/useAuth";
 
 interface RideData {
   from: string,
@@ -16,7 +17,7 @@ interface RideData {
   seatsTaken: number,
   price: number,
   date: Date,
-  participants: []
+  participants: string[],
 }
 
 function AddRide() {
@@ -26,7 +27,7 @@ function AddRide() {
     latitudeDelta: 3,
     longitudeDelta: 3,
   });
-
+  const { user } = useAuth();
   const dateNow = new Date();
   const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -41,6 +42,7 @@ function AddRide() {
   const [markerFromCoordinates, setMarkerFromCoordinates] = useState({latitude: 0, longitude: 0});
   const [markerToCoordinates, setMarkerToCoordinates] = useState({latitude: 0, longitude: 0});
   const [changeRegion, setChangeRegion] = useState(false);
+  const insets = useSafeAreaInsets();
 
 
   //Form data
@@ -59,7 +61,6 @@ function AddRide() {
   }, [from, to]);
 
   useEffect(()=>{
-    console.log("Moving map");
     if(mapRef.current){
       (mapRef.current as MapView).animateToRegion(region);
     }
@@ -74,9 +75,8 @@ function AddRide() {
       seatsTaken: 0,
       price: parseInt(price),
       date: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0),
-      participants: [],
+      participants: [user.email],
     }
-
     if(rideToSave.from === "" || rideToSave.to === ""){
       setError("Incorrect city selected");
       return;
@@ -96,7 +96,6 @@ function AddRide() {
 
     try {
       await saveRide(rideToSave);
-      console.log("Saved: ",from, to, seats, price, new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0));
     }
     catch (e) {
       if (e instanceof Error){
@@ -135,8 +134,6 @@ function AddRide() {
     else if(markerToCoordinates.latitude > 0){
       newRegion = {...newRegion, ... markerToCoordinates};
     }
-    
-    console.log("Markers: " + markerFromCoordinates.latitude + " " + markerToCoordinates.latitude);
     setRegion(newRegion);
     setChangeRegion(!changeRegion);
   },[markerFromCoordinates,markerToCoordinates]);
@@ -152,9 +149,8 @@ function AddRide() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container]}>
       <StatusBar style="light" backgroundColor="#2B2D42" />
-      
       {/* Map portion */}
       <View style={styles.topCont}>
         <MapView style={{flex: 1}} initialRegion={region} ref={mapRef}>

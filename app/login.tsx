@@ -1,29 +1,44 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Text, View, StyleSheet, Image, Pressable, TextInput} from "react-native";
+import useAuth from "@/hooks/useAuth";
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { auth } from "../firebase";
+import { Text, View, StyleSheet, Image, Pressable, TextInput, ActivityIndicator} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("test@test.com");
+  const [password, setPassword] = useState("test123");
   const router = useRouter();
+  const { user, error, signIn, register, loading } = useAuth();
   
   const tryLogin = ()=>{
     console.log("Pressed login");
-    router.replace("./(tabs)");
+    signIn(email,password);
   }
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.replace('/(tabs)');
+      }
+    });
+    return unsub;
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{headerTransparent: true, headerTitle: "Login"}} />
       <View style={styles.secondaryCont}>
         <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")}/>
       </View>
       <View style={styles.secondaryCont}>
         <Text style={[styles.title, styles.textDark]}>Login</Text>
-          <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
-          <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
-        <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryLogin}>
-          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>
+        <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
+        <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
+        {error ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{error.message}</Text> : <></>}
+        <Pressable style={[styles.button, styles.buttonPrimary, {flexDirection: "row"}]} onPress={tryLogin}>
+          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>{loading ? <ActivityIndicator /> : <></>}
         </Pressable>
       </View>   
     </SafeAreaView>

@@ -1,5 +1,8 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { auth } from "@/firebase";
+import useAuth from "@/hooks/useAuth";
+import { Stack, useRouter } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { Text, View, StyleSheet, Image, Pressable, TextInput} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,13 +12,37 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const router = useRouter();
+  const { error, register } = useAuth();
+  const [ localError, setLocalError ] = useState("");
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.replace('/(tabs)');
+      }
+    });
+    return unsub;
+  }, []);
   
   const tryRegister = ()=>{
     console.log("Pressed register");
+    if(email != "" && password != "" && passwordConfirm != "" && name != ""){
+      if(password != passwordConfirm){
+        setLocalError("Passwords have to match.");
+      }
+      else{
+        register(email, password, name);
+        setLocalError("");
+      }
+    }
+    else{
+      setLocalError("Please fill all the fields.");
+    }
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{headerTransparent: true, headerTitle: "Register"}} />
       <View style={[styles.secondaryCont, {flex: 1}]}>
         <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")}/>
       </View>
@@ -27,9 +54,14 @@ export default function Register() {
           <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
           <TextInput style={styles.input} onChangeText={setPasswordConfirm} value={passwordConfirm} placeholder="Confirm Password" secureTextEntry={true} />
         </View>
-        <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryRegister}>
-          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Register</Text>
-        </Pressable>
+        <View style={{width: "100%"}}>
+          {error ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{error.message}</Text> : <></>}
+          {localError != "" ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{localError}</Text> : <></>}
+          <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryRegister}>
+            <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Register</Text>
+          </Pressable>
+        </View>
+        
       </View>   
     </SafeAreaView>
   );

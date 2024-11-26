@@ -8,6 +8,8 @@ import CustomSplashScreen from "@/components/CustomSplashScreen";
 export default function RideLayout() {
   
   return (
-    <Stack />
+    <Stack>
+      
+    </Stack>
   );
 }

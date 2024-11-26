@@ -1,8 +1,12 @@
-import { Redirect, useRouter } from "expo-router";
+import useAuth from "@/hooks/useAuth";
+import { Redirect, useNavigation, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Text, View, StyleSheet, Image, Pressable} from "react-native";
 
 export default function Index() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+
   
   const goLogin = ()=>{
     console.log("Pressed login");
@@ -12,6 +16,14 @@ export default function Index() {
   const goRegister = ()=>{
     console.log("Pressed reg");
     router.push("./register");
+  }
+
+  const goHome = ()=>{
+    router.replace('/(tabs)');
+  }
+
+  const goLogOut = ()=>{
+    logout();
   }
 
   return (
@@ -24,12 +36,23 @@ export default function Index() {
           <Text style={[styles.title, styles.textDark]}>Welcome to EasyRider!</Text>
           <Text style={[styles.subtitle, styles.textDark]}>Ride-sharing made easy</Text>
         </View>
-        <Pressable style={[styles.button, styles.buttonPrimary]} onPress={goLogin}>
-          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>
-        </Pressable>
-        <Pressable style={[styles.button, styles.buttonSecondary]} onPress={goRegister}>
-          <Text style={[{color: "#333333"}, styles.buttonLabel]}>Register</Text>
-        </Pressable>
+        {user ? <>
+          <Pressable style={[styles.button, styles.buttonPrimary]} onPress={goHome}>
+            <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Continue as {user.displayName != undefined ? user.displayName : "Anonymous"}</Text>
+          </Pressable>
+          <Pressable style={[styles.button, styles.buttonSecondary]} onPress={goLogOut}>
+            <Text style={[{color: "#333333"}, styles.buttonLabel]}>Log Out</Text>
+          </Pressable>
+        </> : (
+        <>
+          <Pressable style={[styles.button, styles.buttonPrimary]} onPress={goLogin}>
+            <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>
+          </Pressable>
+          <Pressable style={[styles.button, styles.buttonSecondary]} onPress={goRegister}>
+            <Text style={[{color: "#333333"}, styles.buttonLabel]}>Register</Text>
+          </Pressable>
+        </>
+        )}
       </View>   
     </View>
   );

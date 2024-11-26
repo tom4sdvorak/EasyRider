@@ -3,7 +3,7 @@ import { getAllRides } from "@/hooks/storage";
 import { ListItem } from "@rneui/themed";
 import { Redirect, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, Pressable, ScrollView} from "react-native";
+import { Text, View, StyleSheet, Image, Pressable, ScrollView, TouchableOpacity} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -17,7 +17,7 @@ interface RideData {
   seatsTaken: number,
   price: number,
   date: Date,
-  participants: []
+  participants: string[]
 }
 
 interface Ride {
@@ -33,6 +33,7 @@ function FindRide() {
   const [to, setTo] = useState("");
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoaded, setLoaded] = useState(false);
+  const router = useRouter();
 
   useEffect(()=>{
     setCities(getCities());
@@ -133,22 +134,24 @@ function FindRide() {
         <View style={styles.botCont}>
           {!isLoaded ? (<Text style={[styles.label, styles.textDark]}>Loading...</Text>) : rides.length > 0 ? (
             rides.map((ride, i) => (
-              <ListItem key={i} containerStyle={styles.rideListItem} bottomDivider>
-                {ride.rideData.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="#2B2D42" /> : ride.rideData.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="#2B2D42" /> : <FontAwesome5 name="bus-alt" size={24} color="#2B2D42" />}
-                <ListItem.Content>
-                  <Text style={[styles.secondLabel,{color: "#D90429"}]}>Leaves in {getTimeLeft(ride.rideData.date)}</Text>
-                  <ListItem.Title>
-                    <Text style={[styles.label, styles.textDark]}>{ride.rideData.from} <FontAwesome name="long-arrow-right" size={16} color="#333333" /> {ride.rideData.to}</Text>
-                  </ListItem.Title>
-                  <ListItem.Subtitle>
-                    <Text style={[styles.subtitle, styles.textDark]}>
-                      Remaining spots: {ride.rideData.seatsTotal-ride.rideData.seatsTaken}{"\n"}
-                      Price: {ride.rideData.price}
-                    </Text>
-                  </ListItem.Subtitle>
-                </ListItem.Content>
-                <ListItem.Chevron color="#2B2D42"/>
-              </ListItem>
+              <TouchableOpacity key={i} onPress={()=>router.navigate(`/ride/${ride.id}`)}>
+                <ListItem containerStyle={styles.rideListItem} bottomDivider> 
+                    {ride.rideData.seatsTotal < 5 ? <FontAwesome name="car" size={24} color="#2B2D42" /> : ride.rideData.seatsTotal < 15 ? <FontAwesome5 name="shuttle-van" size={24} color="#2B2D42" /> : <FontAwesome5 name="bus-alt" size={24} color="#2B2D42" />}
+                    <ListItem.Content>
+                      <Text style={[styles.secondLabel,{color: "#D90429"}]}>Leaves in {getTimeLeft(ride.rideData.date)}</Text>
+                      <ListItem.Title>
+                        <Text style={[styles.label, styles.textDark]}>{ride.rideData.from} <FontAwesome name="long-arrow-right" size={16} color="#333333" /> {ride.rideData.to}</Text>
+                      </ListItem.Title>
+                      <ListItem.Subtitle>
+                        <Text style={[styles.subtitle, styles.textDark]}>
+                          Remaining spots: {ride.rideData.seatsTotal-ride.rideData.seatsTaken}{"\n"}
+                          Price: {ride.rideData.price}
+                        </Text>
+                      </ListItem.Subtitle>
+                    </ListItem.Content>
+                    <ListItem.Chevron color="#2B2D42"/> 
+                </ListItem>
+              </TouchableOpacity>
             ))) : ( 
             <Text style={[styles.label, styles.textDark]}>No rides available.</Text>
           )}

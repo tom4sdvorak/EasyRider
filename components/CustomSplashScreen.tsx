@@ -1,5 +1,5 @@
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, View, StyleSheet, Easing } from "react-native";
 
 interface CustomSplashScreenProps {
@@ -7,21 +7,30 @@ interface CustomSplashScreenProps {
 }
 
 export default function CustomSplashScreen({ isActive } : CustomSplashScreenProps){
-  const spinValue = new Animated.Value(0);
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const animation = useRef(null);
   const rotate = spinValue.interpolate({
     inputRange: [0,1],
     outputRange: ['0deg', '360deg'],
   });
 
   useEffect(() => {
-    Animated.loop(Animated.timing(spinValue, {
-      toValue: 1,
-      duration: 5000,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    })).start();
-    if (isActive){
-      spinValue.stopAnimation();
+    if (isActive) {
+      if (!animation.current) {
+        // @ts-ignore
+        animation.current = Animated.loop(
+          Animated.timing(spinValue, {
+            toValue: 1,
+            duration: 5000,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          })
+        ).start();
+      }
+    } else {
+      // @ts-ignore
+      animation.current?.stop();
+      animation.current = null;
     }
   }, [isActive]);
 
