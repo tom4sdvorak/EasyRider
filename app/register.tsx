@@ -3,9 +3,10 @@ import useAuth from "@/hooks/useAuth";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, Pressable, TextInput} from "react-native";
+import { Text, View, StyleSheet, Image, Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Controls register screen
 export default function Register() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -13,7 +14,7 @@ export default function Register() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const router = useRouter();
   const { error, register } = useAuth();
-  const [ localError, setLocalError ] = useState("");
+  const [localError, setLocalError] = useState("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -23,46 +24,42 @@ export default function Register() {
     });
     return unsub;
   }, []);
-  
-  const tryRegister = ()=>{
-    console.log("Pressed register");
-    if(email != "" && password != "" && passwordConfirm != "" && name != ""){
-      if(password != passwordConfirm){
+
+  const tryRegister = () => {
+    if (email !== "" && password !== "" && passwordConfirm !== "" && name !== "") {
+      if (password !== passwordConfirm) {
         setLocalError("Passwords have to match.");
-      }
-      else{
+      } else {
         register(email, password, name);
         setLocalError("");
       }
-    }
-    else{
+    } else {
       setLocalError("Please fill all the fields.");
     }
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{headerTransparent: true, headerTitle: "Register"}} />
-      <View style={[styles.secondaryCont, {flex: 1}]}>
-        <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")}/>
+      <Stack.Screen options={{ headerTransparent: true, headerTitle: "Register" }} />
+      <View style={[styles.secondaryCont, { flex: 1 }]}>
+        <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")} />
       </View>
-      <View style={[styles.secondaryCont, {flex: 2}]}>
-        <Text style={[styles.title, styles.textDark]}>Create Account</Text>
-        <View style={{width: "100%"}}>
+      <View style={[styles.secondaryCont, { flex: 2 }]}>
+        <Text style={styles.title}>Create Account</Text>
+        <View style={{ width: "100%" }}>
           <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
           <TextInput style={styles.input} onChangeText={setName} value={name} placeholder="Name" autoFocus={true} />
           <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
           <TextInput style={styles.input} onChangeText={setPasswordConfirm} value={passwordConfirm} placeholder="Confirm Password" secureTextEntry={true} />
         </View>
-        <View style={{width: "100%"}}>
-          {error ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{error.message}</Text> : <></>}
-          {localError != "" ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{localError}</Text> : <></>}
+        <View style={{ width: "100%" }}>
+          {error ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{error.message}</Text> : null}
+          {localError !== "" ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{localError}</Text> : null}
           <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryRegister}>
-            <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Register</Text>
+            <Text style={[{ color: "#EDF2F4" }, styles.buttonLabel]}>Register</Text>
           </Pressable>
         </View>
-        
-      </View>   
+      </View>
     </SafeAreaView>
   );
 }
@@ -74,7 +71,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   secondaryCont: {
-    justifyContent: "space-evenly", 
+    justifyContent: "space-evenly",
     alignItems: "center",
   },
   logo: {
@@ -85,13 +82,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "bold",
-  },
-  textDark: {
-    color: "#333333",
-    textAlign: "center",
-  },
-  textLight: {
-    color: "#EDF2F4",
   },
   button: {
     alignItems: 'center',
@@ -113,10 +103,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2B2D42',
     borderBottomColor: "#D90429",
   },
-  buttonSecondary: {
-    backgroundColor: '#8D99AE',
-    borderBottomColor: "#333333",
-  },
   input: {
     borderRadius: 4,
     borderColor: "#8D99AE",
@@ -130,5 +116,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   }
 });
-
-

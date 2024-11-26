@@ -1,5 +1,5 @@
-import { Redirect, Stack, useRouter } from "expo-router";
-import { Text, View, StyleSheet, Image, Pressable, Button, TextInput, FlatList, ScrollView} from "react-native";
+import { useRouter } from "expo-router";
+import { Text, View, StyleSheet, Pressable, TextInput, ScrollView } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from "react";
@@ -7,7 +7,7 @@ import { getCities, getLatLng } from "../../hooks/location";
 import { saveRide } from "../../hooks/storage";
 import { ListItem } from '@rneui/themed';
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import useAuth from "@/hooks/useAuth";
 
 interface RideData {
@@ -20,29 +20,29 @@ interface RideData {
   participants: string[],
 }
 
-function AddRide() {
-  const [region, setRegion] = useState({
+export default function AddRide() {
+  const [region, setRegion] = useState({ // Initial region for mapview
     latitude: 62.3100964,
     longitude: 25.6890595,
     latitudeDelta: 3,
     longitudeDelta: 3,
   });
+
   const { user } = useAuth();
   const dateNow = new Date();
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]); // List of cities app allows to travel from/to
   const [error, setError] = useState('');
-  const [fromExpanded, setFromExpanded] = useState(false);
-  const [toExpanded, setToExpanded] = useState(false);
-  const [date, setDate] = useState(new Date(dateNow.getTime() + 3600000));
-  const [time, setTime] = useState(new Date(dateNow.getTime() + 3600000));
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [fromExpanded, setFromExpanded] = useState(false); // Controls dropdown menu of cities list
+  const [toExpanded, setToExpanded] = useState(false);  // Controls dropdown menu of cities list
+  const [date, setDate] = useState(new Date(dateNow.getTime() + 3600000));  // Sets date and time for hour from now to be used as minimum value in datepicker
+  const [time, setTime] = useState(new Date(dateNow.getTime() + 3600000));  // Sets date and time for hour from now to be used as minimum value in datepicker
+  const [showDatePicker, setShowDatePicker] = useState(false);  // Controls if datepicker is shown or not
+  const [showTimePicker, setShowTimePicker] = useState(false);  // Controls if datepicker is shown or not
   const router = useRouter();
-  const mapRef = useRef(null);
-  const [markerFromCoordinates, setMarkerFromCoordinates] = useState({latitude: 0, longitude: 0});
-  const [markerToCoordinates, setMarkerToCoordinates] = useState({latitude: 0, longitude: 0});
-  const [changeRegion, setChangeRegion] = useState(false);
-  const insets = useSafeAreaInsets();
+  const mapRef = useRef(null); // Will hold reference to mapview
+  const [markerFromCoordinates, setMarkerFromCoordinates] = useState({ latitude: 0, longitude: 0 }); // Holds coordinates of markers used in the mapview
+  const [markerToCoordinates, setMarkerToCoordinates] = useState({ latitude: 0, longitude: 0 });  // Holds coordinates of markers used in the mapview
+  const [changeRegion, setChangeRegion] = useState(false); // functional variable that makes sure to trigger useEffect for region change
 
 
   //Form data
@@ -50,24 +50,27 @@ function AddRide() {
   const [to, setTo] = useState("");
   const [seats, setSeats] = useState("1");
   const [price, setPrice] = useState("1");
-  
 
-  useEffect(()=>{
+  // At first, we load our list of cities
+  useEffect(() => {
     setCities(getCities());
   }, []);
 
-  useEffect(()=>{
+  // Whenever user changes from/to location, we get the new coordinates
+  useEffect(() => {
     getCoord();
   }, [from, to]);
 
-  useEffect(()=>{
-    if(mapRef.current){
+  // Runs whenever we need to change MapView region to updated coordinates
+  useEffect(() => {
+    if (mapRef.current) {
       (mapRef.current as MapView).animateToRegion(region);
     }
   }, [changeRegion]);
 
+  // Runs when we submit ride
   const trySubmit = async ()=>{
-    console.log("Pressed submit");
+    // Create new RideData object with user enetered data
     const rideToSave: RideData = {
       from: from,
       to: to,
@@ -77,6 +80,8 @@ function AddRide() {
       date: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes(), 0),
       participants: [user.email],
     }
+
+    // Validations
     if(rideToSave.from === "" || rideToSave.to === ""){
       setError("Incorrect city selected");
       return;
@@ -108,6 +113,7 @@ function AddRide() {
     }    
   }
 
+  // Gets coordinates of the chosen cities from our saved json
   const getCoord = () => {
     let data = {latitude: 0, longitude: 0};    
     if(from != ""){
@@ -120,22 +126,25 @@ function AddRide() {
     }
   }
 
+  // Runs when coordinates of our marker were changed (like when user changed location)
   useEffect(()=>{
-    let newRegion = { ...region };
+    let newRegion = { ...region }; // We copy current region in MapView
     if(markerFromCoordinates.latitude > 0 && markerToCoordinates.latitude > 0){
+      // If both markers are in place already, we calculate new region for MapView to be centered between 2 destinations (latitude,longtitude) and zoomed just enough to show them (deltas)
       newRegion.latitude = (markerFromCoordinates.latitude+markerToCoordinates.latitude)/2;
       newRegion.longitude = (markerFromCoordinates.longitude+markerToCoordinates.longitude)/2;
       newRegion.latitudeDelta = Math.abs(markerToCoordinates.latitude-markerFromCoordinates.latitude)+0.5;
       newRegion.longitudeDelta = Math.abs(markerToCoordinates.longitude-markerFromCoordinates.longitude)+0.5;
     }
-    else if(markerFromCoordinates.latitude > 0){
+    // Otherwise, if only one location was chosen, we just change region latitude/longitude to it
+    else if(markerFromCoordinates.latitude > 0){ 
       newRegion = {...newRegion, ... markerFromCoordinates};
     }
-    else if(markerToCoordinates.latitude > 0){
+    else if(markerToCoordinates.latitude > 0){   
       newRegion = {...newRegion, ... markerToCoordinates};
     }
     setRegion(newRegion);
-    setChangeRegion(!changeRegion);
+    setChangeRegion(!changeRegion); // Here we call our functional variable as changing region alone is not big enough change to trigger useEffect for moving mapview
   },[markerFromCoordinates,markerToCoordinates]);
 
   const datePickerAction = (event: DateTimePickerEvent, newDate: Date)=>{
@@ -161,7 +170,6 @@ function AddRide() {
 
       {/* Form portion */}
       <View style={styles.botCont}>
-               
         <View>          
           {/* List of cities to choose starting location */}
           <Text style={[styles.label, styles.textDark]}>From?</Text>
@@ -221,9 +229,9 @@ function AddRide() {
             <Text style={[styles.secondLabel, styles.textDark]}>Seats</Text>
             <TextInput inputMode="numeric" keyboardType='numeric' value={seats.toString()} onChangeText={(e)=>setSeats(e)} style={styles.input}></TextInput>
           </View>
-          {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Date</Text>
+            {/* ReadOnly input that displays datepicker on click */}
             <Pressable onPressIn={()=>setShowDatePicker(true)}><TextInput readOnly={true} style={styles.input} value={date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()}></TextInput></Pressable>
             {showDatePicker && 
             <RNDateTimePicker value={new Date()} timeZoneName={'Europe/Helsinki'} 
@@ -237,9 +245,9 @@ function AddRide() {
             <Text style={[styles.secondLabel, styles.textDark]}>Price (€)</Text>
             <TextInput inputMode="numeric" keyboardType='numeric' value={price.toString()} onChangeText={(e)=>setPrice(e)} style={styles.input}></TextInput>
           </View>
-          {/* ReadOnly input that displays datepicker on click */}
           <View style={{flex: 2}}>
             <Text style={[styles.secondLabel, styles.textDark]}>Time</Text>
+            {/* ReadOnly input that displays datepicker on click */}
             <Pressable onPressIn={()=>setShowTimePicker(true)}><TextInput readOnly={true} style={styles.input} value={time.getHours()+':'+(time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes())}></TextInput></Pressable>
             {showTimePicker && 
             <RNDateTimePicker is24Hour={true} mode="time" value={new Date(dateNow.getTime() + 3600000)} timeZoneName={'Europe/Helsinki'} 
@@ -258,77 +266,58 @@ function AddRide() {
   );
 }
 
-export default AddRide;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#EDF2F4",
   },
   topCont: {
-    flex: 2, 
+    flex: 2,
     backgroundColor: "#2B2D42",
   },
   botCont: {
-    flex: 3, 
-    justifyContent: "space-evenly", 
+    flex: 3,
+    justifyContent: "space-evenly",
     padding: 16,
   },
   textDark: {
     color: "#333333",
   },
-  textLight: {
-    color: "#EDF2F4",
+  list: {
+    borderRadius: 4,
+    borderColor: "#8D99AE",
+    borderWidth: 1,
+    marginTop: 8,
+    backgroundColor: "#8D99AE",
   },
-  date: {
-    fontSize: 36,
-    lineHeight: 44,
-    textAlign: "center",
+  listItem: {
+    backgroundColor: "#EDF2F4",
+    marginHorizontal: 16,
   },
-  clock: {
-    color: "#D90429", 
-    fontSize: 128, 
-    lineHeight: 136, 
-    textAlign: "center",
+  listText: {
+    fontSize: 16,
+    lineHeight: 24,
   },
-  sectionTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: "#333333",
-    marginRight: 8,
+  label: {
+    fontSize: 16,
+    lineHeight: 24,
   },
-  carousel: {
-    paddingVertical: 8,
-    flexWrap: "nowrap",
-  },
-  tile: {
-    backgroundColor: "#2B2D42",
-    borderRadius: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: "#D90429",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    width: 148,
-  },
-  tileText: {
-    color: "#EDF2F4",
-    textAlign: "center",
-    fontSize: 22,
-    lineHeight: 28,
-  },
-  subTileText: {
-    color: "#D90429",
+  secondLabel: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "bold",
-    textAlign: "center"
+  },
+  input: {
+    borderRadius: 4,
+    borderColor: "#8D99AE",
+    borderWidth: 1,
+    fontSize: 16,
+    lineHeight: 24,
+    padding: 8,
   },
   button: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    boxSizing: "border-box",
-    gap: 32,
     borderRadius: 8,
     borderBottomWidth: 2,
     width: "100%",
@@ -342,38 +331,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#2B2D42',
     borderBottomColor: "#D90429",
   },
-  list: {
-    borderRadius: 4,
-    borderColor: "#8D99AE",
-    borderWidth: 1,
-    marginTop: 8,
-    backgroundColor: "#8D99AE",
-  },
-  listItem: {
-    backgroundColor: "#EDF2F4",
-    marginHorizontal: 16,
-    boxShadow: "2px 3px 5px #999",
-  },
-  listText: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  label: {
-    fontSize: 16,
-    lineHeight: 24
-  },
-  secondLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  input: {
-    borderRadius: 4,
-    borderColor: "#8D99AE",
-    borderWidth: 1,
-    boxSizing: "border-box",
-    fontSize: 16,
-    lineHeight: 24,
-    padding: 8,
-  }
 });
 

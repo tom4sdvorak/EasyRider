@@ -1,15 +1,10 @@
-import { Redirect, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Text, View, StyleSheet, Image, Pressable, TextInput, FlatList, ScrollView} from "react-native";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Text, View, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from "react";
-import { getCities, getLatLng } from "@/hooks/location";
-import { deleteRide, saveRide } from "@/hooks/storage";
-import { ListItem } from '@rneui/themed';
-import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { getLatLng } from "@/hooks/location";
+import { deleteRide, saveRide, getRideById } from "@/hooks/storage";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
-import { getRideById } from "@/hooks/storage";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Button } from '@rneui/themed';
 import useAuth from "@/hooks/useAuth";
@@ -29,6 +24,7 @@ interface Ride {
   rideData: RideData,
 }
 
+// Displays detailed screen of specific ride based on id of it in route parameters
 export default function RideDetails() {
   const [region, setRegion] = useState({
     latitude: 62.3100964,
@@ -37,24 +33,26 @@ export default function RideDetails() {
     longitudeDelta: 6,
   });
   const { user } = useAuth();
-  const [countdown, setCountdown] = useState({days: 0, hours: 0, minutes: 0, seconds: 0}); 
-  const local = useLocalSearchParams();
+  const [countdown, setCountdown] = useState({days: 0, hours: 0, minutes: 0, seconds: 0}); // Holds time value for countdown
+  const local = useLocalSearchParams(); // Holds local parameters from route
   const [rideData, setRideData] = useState<RideData>();
   const [fromCoord, setFromCoord] = useState({latitude: 0, longitude: 0});
   const [toCoord, setToCoord] = useState({latitude: 0, longitude: 0});
-  const [changeRegion, setChangeRegion] = useState(false);
-  const mapRef = useRef(null);
+  const [changeRegion, setChangeRegion] = useState(false); // functional variable that makes sure to trigger useEffect for region change
+  const mapRef = useRef(null); // Will hold reference to mapview
   const [isLoaded, setIsLoaded] = useState(false);
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets(); // Holds dimensions of screen danger zone elements
   const [joined, setJoined] = useState(false);
   const router = useRouter();
-  const [buttonDisabled, setButtonDisabled ] = useState(true);
-  const [localError, setLocalError ] = useState("");
+  const [buttonDisabled, setButtonDisabled] = useState(true);
+  const [localError, setLocalError] = useState("");
 
-  useEffect(()=>{
-    fetchRide().catch(console.error);;
+  // Start by fetching the RideData of this ride
+  useEffect(() => {
+    fetchRide().catch(console.error);
   }, []);
 
+  // Keeps countdown updated
   const updateCountdown = () => { 
     if(rideData != null){
       let deltaTime = rideData.date.getTime() - new Date().getTime();
@@ -68,6 +66,7 @@ export default function RideDetails() {
     }
   };
 
+  // Triggers when coordinates are changed, which happens when RideData are finally received. Works as described in addride.tsx
   useEffect(()=>{
     let newRegion = { ...region };
     if(fromCoord.latitude > 0 && toCoord.latitude > 0){
@@ -86,12 +85,14 @@ export default function RideDetails() {
     setChangeRegion(!changeRegion);
   },[fromCoord,toCoord]);
 
+  // Changes mapview to new region
   useEffect(()=>{
     if(mapRef.current){
       (mapRef.current as MapView).animateToRegion(region);
     }
   }, [changeRegion]);
 
+  // Triggered when rideData is changed (like after being loaded from storage) and sets countdown to count till departure
   useEffect(()=>{
     setIsLoaded(true);
     setButtonDisabled(false);
@@ -100,13 +101,14 @@ export default function RideDetails() {
     return () => clearInterval(interval);
   }, [rideData])
 
+  // Fetches the initial RideData from storage and sets coordinates for mapview
   const fetchRide = async()=>{
     try {
       let ride:RideData = await getRideById(local.ride.toString());
       setRideData(ride);
       setFromCoord(getLatLng(ride.from));
       setToCoord(getLatLng(ride.to));
-      setJoined(ride.participants.includes(user.email));
+      setJoined(ride.participants.includes(user.email)); // Check if current user is participant of the ride already
     }
     catch (e){
       console.log(e);
@@ -115,15 +117,16 @@ export default function RideDetails() {
 
   // Adds user to ride list
   const joinRide = () => {
-    setButtonDisabled(true);
-    const rideToSave: RideData = {...rideData} as RideData;
+    setButtonDisabled(true); // Temporarily disable the join/leave button
+    const rideToSave: RideData = {...rideData} as RideData; // Copy current ride data to new object
+    
     if(rideToSave.seatsTaken >= rideToSave.seatsTotal){
       setLocalError("This ride is full.")
     }
     else{
-      rideToSave.participants.push(user.email);
-      rideToSave.seatsTaken += 1;
-      saveRide(rideToSave,local.ride.toString());
+      rideToSave.participants.push(user.email); // Add current user as participant
+      rideToSave.seatsTaken += 1; // Increase the amount of seats occupied
+      saveRide(rideToSave,local.ride.toString()); // Save ride (update) to storage
       setRideData(rideToSave);
       setJoined(true);
     }
@@ -132,8 +135,8 @@ export default function RideDetails() {
 
   // Removes user from ride list
   const leaveRide = () => {
-    setButtonDisabled(true);
-    const rideToSave: RideData = {...rideData} as RideData;
+    setButtonDisabled(true); // Temporarily disable the join/leave button
+    const rideToSave: RideData = {...rideData} as RideData; // Copy current ride data to new object
     if(rideToSave.participants.length > 0){ // First confirm there are participants
       if(rideToSave.participants[0] === user.email){ // Then check if owner (on first position) is trying to leave and delete ride instead
         deleteRide(local.ride.toString());
@@ -171,6 +174,7 @@ export default function RideDetails() {
                   {' '+rideData.to}
                 </Text>
               </View>
+              {/* Show countdown till departure when there is less than 1 day left */}
               {countdown.days < 1 ? (
                 <View style={{paddingBottom: 16}}>
                   <Text style={[styles.textLight, styles.label]}>Leaving in:</Text>
@@ -200,6 +204,7 @@ export default function RideDetails() {
               </View>
               <View style={{flexDirection: "row", justifyContent: "space-between"}}>
                 {localError != '' ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{localError}</Text> : <Text></Text>}
+                {/* Switch button from join/leave depending on user */}
                 {!joined ? 
                 <Button disabled={buttonDisabled} buttonStyle={[styles.button,{borderColor: "#008000"}]} titleStyle={[styles.buttonLabel,{color: "#008000"}]} title="Join Ride" type="outline"
                 icon={<AntDesign name="plus" size={24} color="#008000" />}
@@ -218,11 +223,10 @@ export default function RideDetails() {
           ) : (
             <Text style={[styles.label, styles.textDark]}>This ride does not exist</Text>
           )}
-        
-        
       </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -250,38 +254,6 @@ const styles = StyleSheet.create({
     lineHeight: 64, 
     textAlign: "center",
   },
-  sectionTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: "#333333",
-    marginRight: 8,
-  },
-  carousel: {
-    paddingVertical: 8,
-    flexWrap: "nowrap",
-  },
-  tile: {
-    backgroundColor: "#2B2D42",
-    borderRadius: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: "#D90429",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    width: 148,
-  },
-  tileText: {
-    color: "#EDF2F4",
-    textAlign: "center",
-    fontSize: 22,
-    lineHeight: 28,
-  },
-  subTileText: {
-    color: "#D90429",
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "bold",
-    textAlign: "center"
-  },
   button: {
     borderRadius: 4,
     paddingVertical: 8,
@@ -293,44 +265,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
   },
-  buttonPrimary: {
-    backgroundColor: '#2B2D42',
-    borderBottomColor: "#D90429",
-  },
-  list: {
-    borderRadius: 4,
-    borderColor: "#8D99AE",
-    borderWidth: 1,
-    marginTop: 8,
-    backgroundColor: "#8D99AE",
-  },
-  listItem: {
-    backgroundColor: "#EDF2F4",
-    marginHorizontal: 16,
-    boxShadow: "2px 3px 5px #999",
-  },
-  listText: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
   label: {
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
-  },
-  secondLabel: {
-    fontSize: 14,
-    lineHeight: 20,
-    
-  },
-  input: {
-    borderRadius: 4,
-    borderColor: "#8D99AE",
-    borderWidth: 1,
-    boxSizing: "border-box",
-    fontSize: 16,
-    lineHeight: 24,
-    padding: 8,
   },
   title: {
     fontSize: 32,
@@ -347,5 +285,3 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   }
 });
-
-

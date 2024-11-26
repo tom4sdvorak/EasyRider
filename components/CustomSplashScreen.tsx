@@ -14,6 +14,7 @@ export default function CustomSplashScreen({ isActive } : CustomSplashScreenProp
     outputRange: ['0deg', '360deg'],
   });
 
+  // Animate logo on splash screen
   useEffect(() => {
     if (isActive) {
       if (!animation.current) {
@@ -34,6 +35,7 @@ export default function CustomSplashScreen({ isActive } : CustomSplashScreenProp
     }
   }, [isActive]);
 
+  // Hide static logo splashscreen when image for animated is loaded
   const onImageReady = useCallback(async () => {
         await SplashScreen.hideAsync();
   }, []);

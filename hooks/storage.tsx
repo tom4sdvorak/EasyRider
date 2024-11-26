@@ -58,7 +58,7 @@ export const getAllRides = async (cityFrom?:string, cityTo?:string) : Promise<Ri
 //Save new ride
 export const saveRide = async (rideToSave: RideData, id? : string) => {
     let uniqueId;
-    if(id === undefined){
+    if(id === undefined){ // Generate ID from timestamp when ID is not supplied (meaning we are saving new ride rather than updating)
         uniqueId = (Date.now()).toString();
     }
     else{
@@ -97,6 +97,7 @@ export const getRecentlyAddedRides = async () => {
     return allRides;
 }
 
+// Get ride by its ID
 export const getRideById = async(id: string):Promise<RideData> => {
     try {
         const ride = await AsyncStorage.getItem(id);

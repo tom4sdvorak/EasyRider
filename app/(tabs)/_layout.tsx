@@ -1,8 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
+// Tab layout for the three main tab screens
 export default function TabLayout() {
   return (
     <Tabs
@@ -11,7 +12,6 @@ export default function TabLayout() {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: "#D90429",
         tabBarInactiveTintColor: "#EDF2F4",
-        tabBarItemStyle: styles.tabItem,
       }}
     >
       <Tabs.Screen
@@ -52,9 +52,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     borderColor: "#D90429",
     color: "#EDF2F4",
-  },
-  icon: {
-  },
-  tabItem: {
   }
 });

@@ -10,7 +10,7 @@ const AuthContext = createContext({
 
 });
 
-
+// Main authentication logic
  // @ts-ignore
 export const AuthProvider = ({ children }) => {
   
@@ -25,11 +25,9 @@ export const AuthProvider = ({ children }) => {
       if (user) {
         // @ts-ignore
         setUser(user);
-        console.log(user.email + " has logged in");
       }else{
         // @ts-ignore
         setUser(null);
-        console.log("Found no user");
       }
       setTimeout(() => {
         setLoadingInit(false); // Making sure splashscreen remains visible for at least 5sec
@@ -38,6 +36,7 @@ export const AuthProvider = ({ children }) => {
     return unsub;
   }, []);
 
+  // Signin function for firebase auth
   const signIn = async (email:string, password: string) => {
     setLoading(true);
     try {
@@ -54,6 +53,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Logout for firebase auth
   const logout = () => {
     setLoading(true);
 
@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Register function for firebase auth
   const register = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
@@ -91,6 +92,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Used State variables and functions saved as Memo for easily passing to rest of app
   const memoedValue = useMemo(() => ({
     user,
     loading,

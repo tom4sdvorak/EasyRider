@@ -2,20 +2,20 @@ import useAuth from "@/hooks/useAuth";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { auth } from "../firebase";
-import { Text, View, StyleSheet, Image, Pressable, TextInput, ActivityIndicator} from "react-native";
+import { Text, View, StyleSheet, Image, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onAuthStateChanged } from 'firebase/auth';
 
+// Controls login screen
 export default function Login() {
-  const [email, setEmail] = useState("test@test.com");
-  const [password, setPassword] = useState("test123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
-  const { user, error, signIn, register, loading } = useAuth();
-  
-  const tryLogin = ()=>{
-    console.log("Pressed login");
-    signIn(email,password);
-  }
+  const { user, error, signIn, loading } = useAuth();
+
+  const tryLogin = () => {
+    signIn(email, password);
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -28,19 +28,19 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{headerTransparent: true, headerTitle: "Login"}} />
+      <Stack.Screen options={{ headerTransparent: true, headerTitle: "Login" }} />
       <View style={styles.secondaryCont}>
-        <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")}/>
+        <Image style={styles.logo} source={require("../assets/images/logo_notext_nobg.png")} />
       </View>
       <View style={styles.secondaryCont}>
-        <Text style={[styles.title, styles.textDark]}>Login</Text>
+        <Text style={styles.title}>Login</Text>
         <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
         <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
-        {error ? <Text style={{color: "#D90429", alignSelf: 'center'}}>{error.message}</Text> : <></>}
-        <Pressable style={[styles.button, styles.buttonPrimary, {flexDirection: "row"}]} onPress={tryLogin}>
-          <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Login</Text>{loading ? <ActivityIndicator /> : <></>}
+        {error ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{error.message}</Text> : null}
+        <Pressable style={[styles.button, styles.buttonPrimary, { flexDirection: "row" }]} onPress={tryLogin}>
+          <Text style={[{ color: "#EDF2F4" }, styles.buttonLabel]}>Login</Text>{loading ? <ActivityIndicator /> : null}
         </Pressable>
-      </View>   
+      </View>
     </SafeAreaView>
   );
 }
@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   secondaryCont: {
-    flex: 1, 
-    justifyContent: "space-evenly", 
+    flex: 1,
+    justifyContent: "space-evenly",
     alignItems: "center",
   },
   logo: {
@@ -64,13 +64,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "bold",
-  },
-  textDark: {
-    color: "#333333",
-    textAlign: "center",
-  },
-  textLight: {
-    color: "#EDF2F4",
   },
   button: {
     alignItems: 'center',
@@ -92,10 +85,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2B2D42',
     borderBottomColor: "#D90429",
   },
-  buttonSecondary: {
-    backgroundColor: '#8D99AE',
-    borderBottomColor: "#333333",
-  },
   input: {
     borderRadius: 4,
     borderColor: "#8D99AE",
@@ -109,5 +98,3 @@ const styles = StyleSheet.create({
     margin: 8,
   }
 });
-
-
