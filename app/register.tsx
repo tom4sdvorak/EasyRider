@@ -3,7 +3,7 @@ import useAuth from "@/hooks/useAuth";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, Pressable, TextInput } from "react-native";
+import { Text, View, StyleSheet, Image, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Controls register screen
@@ -13,10 +13,11 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const router = useRouter();
-  const { error, register } = useAuth();
+  const { error, loading, register, setError } = useAuth();
   const [localError, setLocalError] = useState("");
 
   useEffect(() => {
+    setError("");
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.replace('/(tabs)');
@@ -28,13 +29,13 @@ export default function Register() {
   const tryRegister = () => {
     if (email !== "" && password !== "" && passwordConfirm !== "" && name !== "") {
       if (password !== passwordConfirm) {
-        setLocalError("Passwords have to match.");
+        setError("Passwords have to match.");
       } else {
+        setError("");
         register(email, password, name);
-        setLocalError("");
       }
     } else {
-      setLocalError("Please fill all the fields.");
+      setError("Please fill all the fields.");
     }
   }
 
@@ -53,10 +54,9 @@ export default function Register() {
           <TextInput style={styles.input} onChangeText={setPasswordConfirm} value={passwordConfirm} placeholder="Confirm Password" secureTextEntry={true} />
         </View>
         <View style={{ width: "100%" }}>
-          {error ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{error.message}</Text> : null}
-          {localError !== "" ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{localError}</Text> : null}
+          <Text style={{ color: "#D90429", alignSelf: 'center' }}>{localError != "" ? localError : error != "" ? error : null}</Text>
           <Pressable style={[styles.button, styles.buttonPrimary]} onPress={tryRegister}>
-            <Text style={[{ color: "#EDF2F4" }, styles.buttonLabel]}>Register</Text>
+            <Text style={[{ color: "#EDF2F4" }, styles.buttonLabel]}>{loading ? <ActivityIndicator color="#EDF2F4"/> : "Register"}</Text>
           </Pressable>
         </View>
       </View>
@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "bold",
+    color: "#333333",
   },
   button: {
     alignItems: 'center',
@@ -92,7 +93,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderBottomWidth: 2,
     width: "100%",
-    margin: 8,
   },
   buttonLabel: {
     fontSize: 24,
@@ -114,5 +114,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     marginTop: 8,
+    color: "#333333",
   }
 });

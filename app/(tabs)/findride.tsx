@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -155,7 +155,7 @@ export default function FindRide() {
       {/* Mapping over array of rides */}
       <View style={styles.botCont}>
         {!isLoaded ? (
-          <Text style={[styles.label, styles.textDark]}>Loading...</Text>
+          <Text style={[styles.label, styles.textDark, {textAlign: "center"}]}><ActivityIndicator color="#333333"/> Loading...</Text>
         ) : rides.length > 0 ? (
           rides.map((ride, i) => (
             <TouchableOpacity key={i} onPress={() => router.navigate(`/ride/${ride.id}`)}>
@@ -189,7 +189,7 @@ export default function FindRide() {
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={[styles.label, styles.textDark]}>No rides available.</Text>
+          <Text style={[styles.label, styles.textDark, {textAlign: "center"}]}>No rides available.</Text>
         )}
       </View>
     </SafeAreaView>
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EDF2F4",
   },
   botCont: {
+    paddingTop: 16,
     paddingHorizontal: 16,
   },
   textDark: {

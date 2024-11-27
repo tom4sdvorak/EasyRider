@@ -84,7 +84,6 @@ export default function HomeScreen() {
 
   const goLogOut = () => {
     logout();
-    router.dismissAll();
   };
 
   return (
@@ -153,10 +152,12 @@ export default function HomeScreen() {
             <ScrollView horizontal contentContainerStyle={styles.carousel} showsHorizontalScrollIndicator={false}>
               {recentlyAdded.map((ride, i) => (
                 <View key={i} style={{ marginRight: 8 }}>
+                  <TouchableOpacity onPress={() => router.navigate(`/ride/${ride.id}`)}>
                   <View style={styles.tile}>
                     <Text style={styles.tileText}>{ride.rideData.from + "\nto\n" + ride.rideData.to}</Text>
                   </View>
                   <Text style={styles.subTileText}>{getTimeLeft(ride.rideData.date)}</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
             </ScrollView>
@@ -235,15 +236,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderBottomWidth: 2,
     borderBottomColor: "#D90429",
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     width: 148,
   },
   tileText: {
     color: "#EDF2F4",
     textAlign: "center",
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 18,
+    lineHeight: 24,
   },
   subTileText: {
     color: "#D90429",

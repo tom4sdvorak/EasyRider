@@ -8,16 +8,25 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 // Controls login screen
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("newmail@x.com");
+  const [password, setPassword] = useState("newmail");
   const router = useRouter();
-  const { user, error, signIn, loading } = useAuth();
+  const { user, error, setError, signIn, loading } = useAuth();
 
   const tryLogin = () => {
-    signIn(email, password);
+    // Validation
+    if(email === "" || password === ""){
+      setError("Please fill both fields.")
+    }
+    else{
+      setError("");
+      signIn(email, password);
+    }
+    
   };
 
   useEffect(() => {
+    setError("");
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.replace('/(tabs)');
@@ -36,9 +45,9 @@ export default function Login() {
         <Text style={styles.title}>Login</Text>
         <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" autoComplete="email" autoFocus={true} />
         <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry={true} />
-        {error ? <Text style={{ color: "#D90429", alignSelf: 'center' }}>{error.message}</Text> : null}
+        <Text style={{ color: "#D90429", alignSelf: 'center' }}>{error != "" ? error : null}</Text>
         <Pressable style={[styles.button, styles.buttonPrimary, { flexDirection: "row" }]} onPress={tryLogin}>
-          <Text style={[{ color: "#EDF2F4" }, styles.buttonLabel]}>Login</Text>{loading ? <ActivityIndicator /> : null}
+          <Text style={[styles.textLight, styles.buttonLabel]}>{loading ? <ActivityIndicator color="#EDF2F4"/> : "Login"}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -64,6 +73,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "bold",
+    color: "#333333",
+    textAlign: "center",
   },
   button: {
     alignItems: 'center',
@@ -96,5 +107,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     margin: 8,
-  }
+    color: "#333333"
+  },
+  textDark: {
+    color: "#333333"
+  },
+  textLight: {
+    color: "#EDF2F4"
+  },
 });

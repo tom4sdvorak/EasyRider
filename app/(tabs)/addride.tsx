@@ -53,6 +53,7 @@ export default function AddRide() {
 
   // At first, we load our list of cities
   useEffect(() => {
+    setError("");
     setCities(getCities());
   }, []);
 
@@ -95,7 +96,7 @@ export default function AddRide() {
       return;
     }
     else if(rideToSave.date.getTime() <= dateNow.getTime()){
-      setError("Time of leaving cannot be so soon");
+      setError("Time of departure cannot be so soon");
       return;
     }
 
@@ -133,8 +134,8 @@ export default function AddRide() {
       // If both markers are in place already, we calculate new region for MapView to be centered between 2 destinations (latitude,longtitude) and zoomed just enough to show them (deltas)
       newRegion.latitude = (markerFromCoordinates.latitude+markerToCoordinates.latitude)/2;
       newRegion.longitude = (markerFromCoordinates.longitude+markerToCoordinates.longitude)/2;
-      newRegion.latitudeDelta = Math.abs(markerToCoordinates.latitude-markerFromCoordinates.latitude)+0.5;
-      newRegion.longitudeDelta = Math.abs(markerToCoordinates.longitude-markerFromCoordinates.longitude)+0.5;
+      newRegion.latitudeDelta = Math.abs(markerToCoordinates.latitude-markerFromCoordinates.latitude)+1;
+      newRegion.longitudeDelta = Math.abs(markerToCoordinates.longitude-markerFromCoordinates.longitude)+1;
     }
     // Otherwise, if only one location was chosen, we just change region latitude/longitude to it
     else if(markerFromCoordinates.latitude > 0){ 
@@ -256,7 +257,7 @@ export default function AddRide() {
             /> }
           </View>
         </View>
-        {error && <Text style={[styles.label,{color: "#D90429"}]}>{error}</Text>}
+        <Text style={[styles.label,{color: "#D90429", textAlign: "center"}]}>{error != "" ? error : null}</Text>
         <Pressable style={[styles.button, styles.buttonPrimary]} onPress={trySubmit}>
           <Text style={[{color: "#EDF2F4"}, styles.buttonLabel]}>Submit ride</Text>
         </Pressable>
@@ -312,7 +313,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     fontSize: 16,
     lineHeight: 24,
-    padding: 8,
+    paddingVertical: 8,
+    textAlign: "center",
+    color: "#333333",
   },
   button: {
     alignItems: 'center',

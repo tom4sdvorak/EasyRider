@@ -56,7 +56,6 @@ export const AuthProvider = ({ children }) => {
   // Logout for firebase auth
   const logout = () => {
     setLoading(true);
-
     try {
         signOut(auth);
         setError("");
@@ -68,7 +67,9 @@ export const AuthProvider = ({ children }) => {
     }
     finally {
         setLoading(false);
-        router.dismissAll();
+        if(router.canDismiss()){
+          router.dismissAll();
+        }
     }
   }
 
@@ -97,7 +98,8 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     error,
-    loadingInit, 
+    loadingInit,
+    setError,
     logout,
     signIn,
     register,

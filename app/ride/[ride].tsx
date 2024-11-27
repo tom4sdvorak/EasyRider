@@ -72,8 +72,8 @@ export default function RideDetails() {
     if(fromCoord.latitude > 0 && toCoord.latitude > 0){
       newRegion.latitude = (fromCoord.latitude+toCoord.latitude)/2;
       newRegion.longitude = (fromCoord.longitude+toCoord.longitude)/2;
-      newRegion.latitudeDelta = Math.abs(toCoord.latitude-fromCoord.latitude)+0.5;
-      newRegion.longitudeDelta = Math.abs(toCoord.longitude-fromCoord.longitude)+0.5;
+      newRegion.latitudeDelta = Math.abs(toCoord.latitude-fromCoord.latitude)+1;
+      newRegion.longitudeDelta = Math.abs(toCoord.longitude-fromCoord.longitude)+1;
     }
     else if(fromCoord.latitude > 0){
       newRegion = {...newRegion, ... fromCoord};
@@ -164,8 +164,8 @@ export default function RideDetails() {
             <>
             <View style={styles.topCont}>
               <MapView style={{ flex: 1 }} initialRegion={region} ref={mapRef}>
-                {fromCoord.latitude > 0 ? (<></>) : (<Marker pinColor="#2B2D42" coordinate={fromCoord} />)}
-                {toCoord.latitude > 0 ? (<></>) : (<Marker pinColor="#D90429" coordinate={toCoord} />)}
+                <Marker pinColor="#2B2D42" coordinate={fromCoord} />
+                <Marker pinColor="#D90429" coordinate={toCoord} />
               </MapView>
               <View style={{paddingVertical: 16}}>
                 <Text style={styles.title}>

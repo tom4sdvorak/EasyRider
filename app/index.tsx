@@ -36,21 +36,21 @@ export default function Index() {
         {user ? (
           <>
             <Pressable style={[styles.button, styles.buttonPrimary]} onPress={goHome}>
-              <Text style={styles.buttonLabel}>
+              <Text style={[styles.buttonLabel, styles.textLight]}>
                 Continue as {user.displayName != undefined ? user.displayName : "Anonymous"}
               </Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonSecondary]} onPress={goLogOut}>
-              <Text style={styles.buttonLabel}>Log Out</Text>
+              <Text style={[styles.buttonLabel, styles.textDark]}>Log Out</Text>
             </Pressable>
           </>
         ) : (
           <>
             <Pressable style={[styles.button, styles.buttonPrimary]} onPress={goLogin}>
-              <Text style={styles.buttonLabel}>Login</Text>
+              <Text style={[styles.buttonLabel, styles.textLight]}>Login</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonSecondary]} onPress={goRegister}>
-              <Text style={styles.buttonLabel}>Register</Text>
+              <Text style={[styles.buttonLabel, styles.textDark]}>Register</Text>
             </Pressable>
           </>
         )}
@@ -80,6 +80,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333333",
     textAlign: "center",
+  },
+  textDark: {
+    color: "#333333"
+  },
+  textLight: {
+    color: "#EDF2F4"
   },
   subtitle: {
     fontSize: 16,
